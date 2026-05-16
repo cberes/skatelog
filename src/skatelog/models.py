@@ -1,21 +1,32 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from datetime import date
-from enum import StrEnum
+from enum import auto, StrEnum
 from sqlmodel import Field, SQLModel
+from typing import Self
 
 
 class Discipline(StrEnum):
-    A_FRAME = "a-frame"
-    BANK = "bank"
-    BOWL = "bowl"
-    BOX = "box"
-    FLAT = "flat"
-    HIP = "hip"
-    MANUAL = "manual"
-    RAIL = "rail"
-    SLAPPY = "slappy"
-    TRANSITION = "transition"
+    A_FRAME = auto()
+    BANK = auto()
+    BOWL = auto()
+    BOX = auto()
+    FLAT = auto()
+    HIP = auto()
+    MANUAL = auto()
+    RAIL = auto()
+    SLAPPY = auto()
+    TRANSITION = auto()
+
+    @classmethod
+    def _missing_(cls, value: object) -> Self | None:
+        if not isinstance(value, str):
+            return None
+        value = value.lower()
+        for member in cls:
+            if member.value == value:
+                return member
+        return None
 
 
 class Session(SQLModel, table=True):

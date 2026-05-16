@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from skatelog!")
+from skatelog.cli import main
+
+__all__ = ["main"]
