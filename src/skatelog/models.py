@@ -49,7 +49,7 @@ class Session(SQLModel, table=True):
     @property
     def disciplines(self) -> set[Discipline]:
         flags: dict[Discipline, bool] = {
-            Discipline.A_FRAME: self.flat,
+            Discipline.A_FRAME: self.a_frame,
             Discipline.BANK: self.bank,
             Discipline.BOWL: self.bowl,
             Discipline.BOX: self.box,
