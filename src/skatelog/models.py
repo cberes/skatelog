@@ -1,5 +1,3 @@
-# from __future__ import annotations
-
 from datetime import date
 from enum import auto, StrEnum
 from sqlmodel import Field, SQLModel
@@ -67,3 +65,7 @@ class Session(SQLModel, table=True):
     @property
     def skated(self) -> bool:
         return bool(self.disciplines) or any([self.where, self.shoe, self.board])
+
+    @property
+    def is_good(self) -> bool:
+        return self.skated or bool(self.notes)
