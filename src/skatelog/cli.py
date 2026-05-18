@@ -35,6 +35,16 @@ def import_cmd(csv_path: Annotated[Path, typer.Argument(exists=True, readable=Tr
         n = import_csv(csv_path, db)
     console.print(f"[green]Imported {n} sessions[/green]")
 
+def _session_table(session: Session) -> Table:
+    table = Table(title=str(session.day), show_header=False)
+    disciplines = ", ".join(sorted(d.value for d in session.disciplines)) or "-"
+    table.add_row("Disciplines", disciplines)
+    table.add_row("Where", session.where or "-")
+    table.add_row("Shoe", session.shoe or "-")
+    table.add_row("Board", session.board or "-")
+    table.add_row("Notes", session.notes or "-")
+    return table
+
 @app.command("show")
 def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     """Show a day's session."""
@@ -46,14 +56,7 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
         console.print(f"[yellow]No session logged for {target}[/yellow]")
         raise typer.Exit(code=1)
 
-    table = Table(title=str(session.day), show_header=False)
-    disciplines = ", ".join(sorted(d.value for d in session.disciplines)) or "-"
-    table.add_row("Disciplines", disciplines)
-    table.add_row("Where", session.where or "-")
-    table.add_row("Shoe", session.shoe or "-")
-    table.add_row("Board", session.board or "-")
-    table.add_row("Notes", session.notes or "-")
-    console.print(table)
+    console.print(_session_table(session))
 
 # TODO what's the type of col?
 def _find_values(col, start: date | None) -> list[str]:
@@ -122,6 +125,7 @@ def add_cmd(where: Annotated[str, typer.Option(prompt=True)],
         db.add(session)
         db.commit()
         console.print(f"[green]Saved session for {session.day}[/green]")
+        console.print(_session_table(session))
 
 @app.command("delete")
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
