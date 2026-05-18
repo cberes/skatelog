@@ -3,6 +3,7 @@ from datetime import date
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
+from sqlalchemy import func
 from sqlmodel import Session as DBSession
 from sqlmodel import select
 from skatelog.db import get_engine
@@ -61,20 +62,31 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
     console.print(_session_table(session))
 
 # TODO what's the type of col?
-def _find_values(col, start: date | None) -> list[str]:
+def _find_values(col, start: date | None) -> dict[str, int]:
     engine = get_engine()
     with DBSession(engine) as db:
-        statement = select(col).distinct().where(Session.day >= (start or date.min))
-        return list(x for x in db.exec(statement) if x is not None)
+        statement = select(col, func.count(Session.day)) \
+            .where(Session.day >= (start or date.min)) \
+            .group_by(col)
+        return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
 
-def _find_locations(start: date | None = None) -> list[str]:
+def _find_location_counts(start: date | None = None) -> dict[str, int]:
     return _find_values(Session.where, start)
 
-def _find_shoes(start: date | None = None) -> list[str]:
+def _find_shoe_counts(start: date | None = None) -> dict[str, int]:
     return _find_values(Session.shoe, start)
 
-def _find_boards(start: date | None = None) -> list[str]:
+def _find_board_counts(start: date | None = None) -> dict[str, int]:
     return _find_values(Session.board, start)
+
+def _find_locations(start: date | None = None) -> list[str]:
+    return list(_find_location_counts(start).keys())
+
+def _find_shoes(start: date | None = None) -> list[str]:
+    return list(_find_shoe_counts(start).keys())
+
+def _find_boards(start: date | None = None) -> list[str]:
+    return list(_find_board_counts(start).keys())
 
 def _find_recent_locations() -> list[str]:
     return _find_locations()
@@ -217,7 +229,7 @@ def list_disciplines_cmd() -> None:
     """List all disciplines."""
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
-    table.add_column("Count")
+    table.add_column("Count", justify="right")
     counts = {}
     for d in Discipline:
         table.add_row(d, str(counts.get(str(d), 0)))
@@ -228,8 +240,8 @@ def list_locations_cmd() -> None:
     """List all locations."""
     table = Table(title="Locations")
     table.add_column("Where", style="cyan")
-    table.add_column("Count")
-    counts = {}
+    table.add_column("Count", justify="right")
+    counts = _find_location_counts()
     for loc in sorted(_find_locations()):
         table.add_row(loc, str(counts.get(loc, 0)))
     console.print(table)
@@ -239,8 +251,8 @@ def list_shoes_cmd() -> None:
     """List all shoes."""
     table = Table(title="Shoes")
     table.add_column("Shoe", style="cyan")
-    table.add_column("Count")
-    counts = {}
+    table.add_column("Count", justify="right")
+    counts = _find_shoe_counts()
     for shoe in sorted(_find_shoes()):
         table.add_row(shoe, str(counts.get(shoe, 0)))
     console.print(table)
@@ -250,8 +262,8 @@ def list_boards_cmd() -> None:
     """List all boards."""
     table = Table(title="Boards")
     table.add_column("Board", style="cyan")
-    table.add_column("Count")
-    counts: dict[str, int] = {}
+    table.add_column("Count", justify="right")
+    counts = _find_board_counts()
     for board in sorted(_find_boards()):
         table.add_row(board, str(counts.get(board, 0)))
     console.print(table)
