@@ -95,8 +95,13 @@ def add_cmd(where: Annotated[str, typer.Option(prompt=True)],
     shoes = sorted(_find_shoes())
     boards = sorted(_find_boards())
 
-    selected_attrs = [attr for attr in DISCIPLINE_ATTRS if sum(1 for d in (disciplines or []) if d.startswith(attr.lower())) == 1]
-    discipline_flags = {attr: True for attr in selected_attrs}
+    discipline_flags = {}
+    for d in (disciplines or []):
+        matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.lower())}
+        if len(matches) == 1:
+            discipline_flags.update(matches)
+        elif len(matches) > 1:
+            console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
 
     session = Session(
         day=date.fromisoformat(day),
