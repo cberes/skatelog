@@ -214,10 +214,46 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
 
 @app.command("list-disciplines")
 def list_disciplines_cmd() -> None:
-    """List all valid disciplines."""
-    table = Table(title="Disciplines", show_header=False)
+    """List all disciplines."""
+    table = Table(title="Disciplines")
+    table.add_column("Discipline", style="cyan")
+    table.add_column("Count")
+    counts = {}
     for d in Discipline:
-        table.add_row(d)
+        table.add_row(d, str(counts.get(str(d), 0)))
+    console.print(table)
+
+@app.command("list-locations")
+def list_locations_cmd() -> None:
+    """List all locations."""
+    table = Table(title="Locations")
+    table.add_column("Where", style="cyan")
+    table.add_column("Count")
+    counts = {}
+    for loc in sorted(_find_locations()):
+        table.add_row(loc, str(counts.get(loc, 0)))
+    console.print(table)
+
+@app.command("list-shoes")
+def list_shoes_cmd() -> None:
+    """List all shoes."""
+    table = Table(title="Shoes")
+    table.add_column("Shoe", style="cyan")
+    table.add_column("Count")
+    counts = {}
+    for shoe in sorted(_find_shoes()):
+        table.add_row(shoe, str(counts.get(shoe, 0)))
+    console.print(table)
+
+@app.command("list-boards")
+def list_boards_cmd() -> None:
+    """List all boards."""
+    table = Table(title="Boards")
+    table.add_column("Board", style="cyan")
+    table.add_column("Count")
+    counts: dict[str, int] = {}
+    for board in sorted(_find_boards()):
+        table.add_row(board, str(counts.get(board, 0)))
     console.print(table)
 
 def main() -> None:
