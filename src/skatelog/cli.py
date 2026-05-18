@@ -74,6 +74,15 @@ def _find_shoes(start: date | None = None) -> list[str]:
 def _find_boards(start: date | None = None) -> list[str]:
     return _find_values(Session.board, start)
 
+def _find_recent_locations() -> list[str]:
+    return _find_locations()
+
+def _find_recent_shoes() -> list[str]:
+    return _find_shoes()
+
+def _find_recent_boards() -> list[str]:
+    return _find_boards()
+
 def _delete_by_day(db: DBSession, day: date) -> None:
     existing = db.get(Session, day)
     if existing is not None:
@@ -83,36 +92,64 @@ def _delete_by_day(db: DBSession, day: date) -> None:
 def _none_if_dash(s: str | None) -> str | None:
     return None if s == "-" else s
 
-@app.command("add")
-def add_cmd(where: Annotated[str, typer.Option(prompt=True)],
-            shoe: Annotated[str, typer.Option(prompt=True)],
-            board: Annotated[str, typer.Option(prompt=True)],
-            day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")] = str(date.today()),
-            notes: Annotated[str | None, typer.Option(prompt=True)] = None,
-            disciplines: Annotated[list[str] | None, typer.Option("--discipline", "-d", help="Disciplines trained")] = None) -> None:
-    """Interactively log a session."""
-    # The spreasdsheet has select inputs, so I can easily pick the right options
-    # I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
-    # but IDK if I can do that. so...try to find an value from the list of existing values
-    locations = sorted(_find_locations())
-    shoes = sorted(_find_shoes())
-    boards = sorted(_find_boards())
+def _find_most_recent_session() -> Session | None:
+    engine = get_engine()
+    with DBSession(engine) as db:
+        statement = select(Session) \
+            .where(Session.where is not None, Session.shoe is not None, Session.board is not None) \
+            .order_by(Session.day.desc()) \
+            .limit(1)
+        return db.exec(statement).first()
 
+def _most_recent_location() -> str:
+    session = _find_most_recent_session()
+    return (session is not None and session.where) or ""
+
+def _most_recent_shoe() -> str:
+    session = _find_most_recent_session()
+    return (session is not None and session.shoe) or ""
+
+def _most_recent_board() -> str:
+    session = _find_most_recent_session()
+    return (session is not None and session.board) or ""
+
+# The spreasdsheet has select inputs, so I can easily pick the right options
+# I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
+# but IDK if I can do that. so...try to find an value from the list of existing values
+def _find_by_startswith(value: str, options: list[str]) -> str | None:
+    if (value or "-") == "-":
+        return None
+    try:
+        return next(o for o in options if o.lower().startswith(value.lower()))
+    except StopIteration:
+        console.print(f"[yellow]Adding new value: {value}[/yellow]")
+        return value
+
+def _find_disciplines(disciplines: str | None) -> dict[str, bool]:
     discipline_flags = {}
-    for d in (disciplines or []):
-        matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.lower())}
+    for d in (disciplines or "").split(","):
+        matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
         if len(matches) == 1:
             discipline_flags.update(matches)
         elif len(matches) > 1:
             console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
+    return discipline_flags
 
+@app.command("add")
+def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-DD")] = str(date.today()),
+            where: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_locations)] = _most_recent_location(),
+            shoe: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_shoes)] = _most_recent_shoe(),
+            board: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_boards)] = _most_recent_board(),
+            disciplines: Annotated[str | None, typer.Option(prompt=True, help="Disciplines trained as CSV")] = "-",
+            notes: Annotated[str | None, typer.Option(prompt=True)] = "-") -> None:
+    """Interactively log a session."""
     session = Session(
         day=date.fromisoformat(day),
-        where=next(loc for loc in locations if loc.lower().startswith(where.lower())) or _none_if_dash(where),
-        shoe=next(s for s in shoes if s.lower().startswith(shoe.lower())) or _none_if_dash(shoe),
-        board=next(b for b in boards if b.lower().startswith(board.lower())) or _none_if_dash(board),
+        where=_find_by_startswith(where, _find_locations()),
+        shoe=_find_by_startswith(shoe, _find_shoes()),
+        board=_find_by_startswith(board, _find_boards()),
         notes=_none_if_dash(notes),
-        **discipline_flags,
+        **_find_disciplines(disciplines),
     )
 
     if not session.is_good:
