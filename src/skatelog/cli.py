@@ -7,7 +7,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import select
 from skatelog.db import get_engine
 from skatelog.importer import import_csv
-from skatelog.models import Session
+from skatelog.models import Discipline, Session
 import typer
 from typing import Annotated
 
@@ -17,11 +17,13 @@ DISCIPLINE_ATTRS = [
     "bowl",
     "box",
     "flat",
+    "free",
     "hip",
     "manual",
     "rail",
     "slappy",
     "transition",
+    "vert",
 ]
 
 app = typer.Typer(help="Skateboarding session log.")
@@ -208,6 +210,14 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
         sessions = db.exec(statement)
         for session in sessions:
             table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
+    console.print(table)
+
+@app.command("list-disciplines")
+def list_disciplines_cmd() -> None:
+    """List all valid disciplines."""
+    table = Table(title="Disciplines", show_header=False)
+    for d in Discipline:
+        table.add_row(d)
     console.print(table)
 
 def main() -> None:

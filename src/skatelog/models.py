@@ -10,11 +10,13 @@ class Discipline(StrEnum):
     BOWL = auto()
     BOX = auto()
     FLAT = auto()
+    FREE = auto()
     HIP = auto()
     MANUAL = auto()
     RAIL = auto()
     SLAPPY = auto()
     TRANSITION = auto()
+    VERT = auto()
 
     @classmethod
     def _missing_(cls, value: object) -> Self | None:
@@ -35,11 +37,13 @@ class Session(SQLModel, table=True):
     bowl: bool = False
     box: bool = False
     flat: bool = False
+    free: bool = False
     hip: bool = False
     manual: bool = False
     rail: bool = False
     slappy: bool = False
     transition: bool = False
+    vert: bool = False
 
     where: str | None = None
     shoe: str | None = None
@@ -54,11 +58,13 @@ class Session(SQLModel, table=True):
             Discipline.BOWL: self.bowl,
             Discipline.BOX: self.box,
             Discipline.FLAT: self.flat,
+            Discipline.FREE: self.free,
             Discipline.HIP: self.hip,
             Discipline.MANUAL: self.manual,
             Discipline.RAIL: self.rail,
             Discipline.SLAPPY: self.slappy,
             Discipline.TRANSITION: self.transition,
+            Discipline.VERT: self.vert,
         }
         return {s for s, on in flags.items() if on}
 
