@@ -6,27 +6,13 @@ from rich.table import Table
 from sqlalchemy import func
 from sqlmodel import Session as DBSession
 from sqlmodel import select
+from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
 from skatelog.db import get_engine
 from skatelog.importer import import_csv
 from skatelog.models import Discipline, Session
 import skatelog.queries as query
 import typer
 from typing import Annotated
-
-DISCIPLINE_ATTRS = [
-    "a_frame",
-    "bank",
-    "bowl",
-    "box",
-    "flat",
-    "free",
-    "hip",
-    "manual",
-    "rail",
-    "slappy",
-    "transition",
-    "vert",
-]
 
 app = typer.Typer(help="Skateboarding session log.")
 console = Console()
@@ -80,28 +66,6 @@ def _most_recent_board() -> str:
     session = query.find_most_recent_session()
     return (session is not None and session.board) or ""
 
-# The spreasdsheet has select inputs, so I can easily pick the right options
-# I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
-# but IDK if I can do that. so...try to find an value from the list of existing values
-def _find_by_startswith(value: str, options: list[str]) -> str | None:
-    if (value or "-") == "-":
-        return None
-    try:
-        return next(o for o in options if o.lower().startswith(value.lower()))
-    except StopIteration:
-        console.print(f"[yellow]Adding new value: {value}[/yellow]")
-        return value
-
-def _find_disciplines(disciplines: str | None) -> dict[str, bool]:
-    discipline_flags = {}
-    for d in (disciplines or "").split(","):
-        matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
-        if len(matches) == 1:
-            discipline_flags.update(matches)
-        elif len(matches) > 1:
-            console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
-    return discipline_flags
-
 def _none_if_dash(s: str | None) -> str | None:
     return None if s == "-" else s
 
@@ -113,13 +77,18 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
             disciplines: Annotated[str | None, typer.Option(prompt=True, help="Disciplines trained as CSV")] = "-",
             notes: Annotated[str | None, typer.Option(prompt=True)] = "-") -> None:
     """Interactively log a session."""
+    # The spreasdsheet has select inputs, so I can easily pick the right options
+    # I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
+    # but IDK if I can do that. so...try to find an value from the list of existing values
+    new_value = lambda value: console.print(f"[yellow]Adding new value: {value}[/yellow]")
+    skipped = lambda d: console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
     session = Session(
         day=date.fromisoformat(day),
-        where=_find_by_startswith(where, query.find_locations()),
-        shoe=_find_by_startswith(shoe, query.find_shoes()),
-        board=_find_by_startswith(board, query.find_boards()),
+        where=find_by_startswith(where, query.find_locations(), new_value),
+        shoe=find_by_startswith(shoe, query.find_shoes(), new_value),
+        board=find_by_startswith(board, query.find_boards(), new_value),
         notes=_none_if_dash(notes),
-        **_find_disciplines(disciplines),
+        **find_disciplines(disciplines, skipped),
     )
 
     if not session.is_good:
@@ -135,26 +104,6 @@ def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -
     target = date.fromisoformat(day)
     query.delete_session(target)
 
-def _month_range(month: str) -> tuple[date, date]:
-    start = date.strptime(month, "%Y-%m")
-    next_year = start.year + (start.month // 12)
-    next_month = (start.month % 12) + 1
-    end = date(next_year, next_month, start.day)
-    return (start, end)
-
-def _year_range(year: str) -> tuple[date, date]:
-    start = date.strptime(year, "%Y")
-    end = date(start.year + 1, start.month, start.day)
-    return (start, end)
-
-def _date_range(month: str | None, year: str | None) -> tuple[date, date]:
-    if month is not None:
-        return _month_range(month)
-    elif year is not None:
-        return _year_range(year)
-    else:
-        return (date.min, date.max)
-
 @app.command("list")
 def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
              year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
@@ -166,7 +115,7 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     table.add_column("Board")
     table.add_column("Notes")
 
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     for session in query.find_by_date_range(start, end):
         table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
     console.print(table)
@@ -178,7 +127,7 @@ def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter 
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
     table.add_column("Count", justify="right")
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     counts = query.find_discipline_counts(start, end)
     for d in sorted(counts.keys()):
         table.add_row(str(d), str(counts[d]))
@@ -191,7 +140,7 @@ def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to
     table = Table(title="Locations")
     table.add_column("Where", style="cyan")
     table.add_column("Count", justify="right")
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     counts = query.find_location_counts(start, end)
     for loc in sorted(counts.keys()):
         table.add_row(loc, str(counts[loc]))
@@ -204,7 +153,7 @@ def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYY
     table = Table(title="Shoes")
     table.add_column("Shoe", style="cyan")
     table.add_column("Count", justify="right")
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     counts = query.find_shoe_counts(start, end)
     for shoe in sorted(counts.keys()):
         table.add_row(shoe, str(counts[shoe]))
@@ -217,7 +166,7 @@ def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
     table = Table(title="Boards")
     table.add_column("Board", style="cyan")
     table.add_column("Count", justify="right")
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     counts = query.find_board_counts(start, end)
     for board in sorted(counts.keys()):
         table.add_row(board, str(counts[board]))
