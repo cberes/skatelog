@@ -9,6 +9,7 @@ from sqlmodel import select
 from skatelog.db import get_engine
 from skatelog.importer import import_csv
 from skatelog.models import Discipline, Session
+import skatelog.queries as query
 import typer
 from typing import Annotated
 
@@ -52,79 +53,31 @@ def _session_table(session: Session) -> Table:
 def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     """Show a day's session."""
     target = date.fromisoformat(day)
-    engine = get_engine()
-    with DBSession(engine) as db:
-        session = db.get(Session, target)
+    session = query.find_session(target)
     if session is None:
         console.print(f"[yellow]No session logged for {target}[/yellow]")
         raise typer.Exit(code=1)
-
     console.print(_session_table(session))
 
-# TODO what's the type of col?
-def _find_values(col, start: date | None) -> dict[str, int]:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(col, func.count(Session.day)) \
-            .where(Session.day >= (start or date.min)) \
-            .group_by(col)
-        return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
-
-def _find_location_counts(start: date | None = None) -> dict[str, int]:
-    return _find_values(Session.where, start)
-
-def _find_shoe_counts(start: date | None = None) -> dict[str, int]:
-    return _find_values(Session.shoe, start)
-
-def _find_board_counts(start: date | None = None) -> dict[str, int]:
-    return _find_values(Session.board, start)
-
-def _find_locations(start: date | None = None) -> list[str]:
-    return list(_find_location_counts(start).keys())
-
-def _find_shoes(start: date | None = None) -> list[str]:
-    return list(_find_shoe_counts(start).keys())
-
-def _find_boards(start: date | None = None) -> list[str]:
-    return list(_find_board_counts(start).keys())
-
 def _find_recent_locations() -> list[str]:
-    return _find_locations()
+    return query.find_locations()
 
 def _find_recent_shoes() -> list[str]:
-    return _find_shoes()
+    return query.find_shoes()
 
 def _find_recent_boards() -> list[str]:
-    return _find_boards()
-
-def _delete_by_day(db: DBSession, day: date) -> None:
-    existing = db.get(Session, day)
-    if existing is not None:
-        db.delete(existing)
-        db.flush()
-
-def _none_if_dash(s: str | None) -> str | None:
-    return None if s == "-" else s
-
-def _find_most_recent_session() -> Session | None:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(Session) \
-            .where(Session.where is not None, Session.shoe is not None, Session.board is not None) \
-            .order_by(Session.day.desc()) \
-            .limit(1)
-        return db.exec(statement).first()
+    return query.find_boards()
 
 def _most_recent_location() -> str:
-    session = _find_most_recent_session()
+    session = query.find_most_recent_session()
     return (session is not None and session.where) or ""
 
 def _most_recent_shoe() -> str:
-    session = _find_most_recent_session()
+    session = query.find_most_recent_session()
     return (session is not None and session.shoe) or ""
 
 def _most_recent_board() -> str:
-    session = _find_most_recent_session()
+    session = query.find_most_recent_session()
     return (session is not None and session.board) or ""
 
 # The spreasdsheet has select inputs, so I can easily pick the right options
@@ -149,6 +102,9 @@ def _find_disciplines(disciplines: str | None) -> dict[str, bool]:
             console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
     return discipline_flags
 
+def _none_if_dash(s: str | None) -> str | None:
+    return None if s == "-" else s
+
 @app.command("add")
 def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-DD")] = str(date.today()),
             where: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_locations)] = _most_recent_location(),
@@ -159,9 +115,9 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
     """Interactively log a session."""
     session = Session(
         day=date.fromisoformat(day),
-        where=_find_by_startswith(where, _find_locations()),
-        shoe=_find_by_startswith(shoe, _find_shoes()),
-        board=_find_by_startswith(board, _find_boards()),
+        where=_find_by_startswith(where, query.find_locations()),
+        shoe=_find_by_startswith(shoe, query.find_shoes()),
+        board=_find_by_startswith(board, query.find_boards()),
         notes=_none_if_dash(notes),
         **_find_disciplines(disciplines),
     )
@@ -170,21 +126,14 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
         console.print("[red]Not saving incomplete session[/red]")
         raise typer.Exit(code=1)
 
-    engine = get_engine()
-    with DBSession(engine) as db:
-        _delete_by_day(db, session.day)
-        db.add(session)
-        db.commit()
-        console.print(f"[green]Saved session for {session.day}[/green]")
-        console.print(_session_table(session))
+    query.create_session(session)
+    console.print(f"[green]Saved session for {session.day}[/green]")
+    console.print(_session_table(session))
 
 @app.command("delete")
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     target = date.fromisoformat(day)
-    engine = get_engine()
-    with DBSession(engine) as db:
-        _delete_by_day(db, target)
-        db.commit()
+    query.delete_session(target)
 
 def _month_range(month: str) -> tuple[date, date]:
     start = date.strptime(month, "%Y-%m")
@@ -198,25 +147,18 @@ def _year_range(year: str) -> tuple[date, date]:
     end = date(start.year + 1, start.month, start.day)
     return (start, end)
 
-def _find_by_date_range(start: date, end: date) -> Iterator[Session]:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(Session).where(Session.day >= start, Session.day < end)
-        sessions = db.exec(statement)
-        for session in sessions:
-            yield session
+def _date_range(month: str | None, year: str | None) -> tuple[date, date]:
+    if month is not None:
+        return _month_range(month)
+    elif year is not None:
+        return _year_range(year)
+    else:
+        return (date.min, date.max)
 
 @app.command("list")
 def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
              year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
     """List sessions."""
-    if month is not None:
-        start, end = _month_range(month)
-    elif year is not None:
-        start, end = _year_range(year)
-    else:
-        start, end = (date.min, date.max)
-
     table = Table(title="Sessions")
     table.add_column("Day", justify="right", style="cyan")
     table.add_column("Where", style="green")
@@ -224,57 +166,59 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     table.add_column("Board")
     table.add_column("Notes")
 
-    for session in _find_by_date_range(start, end):
+    start, end = _date_range(month, year)
+    for session in query.find_by_date_range(start, end):
         table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
     console.print(table)
 
-def _find_discipline_counts(start: date | None = None) -> dict[Discipline, int]:
-    counts = {d: 0 for d in Discipline}
-    for session in _find_by_date_range(start or date.min, date.max):
-        for d in session.disciplines:
-            counts[d] += 1
-    return counts
-
 @app.command("list-disciplines")
-def list_disciplines_cmd() -> None:
+def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+                         year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
     """List all disciplines."""
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
     table.add_column("Count", justify="right")
-    counts = _find_discipline_counts()
+    start, end = _date_range(month, year)
+    counts = query.find_discipline_counts(start, end)
     for d in sorted(counts.keys()):
         table.add_row(str(d), str(counts[d]))
     console.print(table)
 
 @app.command("list-locations")
-def list_locations_cmd() -> None:
+def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+                       year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
     """List all locations."""
     table = Table(title="Locations")
     table.add_column("Where", style="cyan")
     table.add_column("Count", justify="right")
-    counts = _find_location_counts()
+    start, end = _date_range(month, year)
+    counts = query.find_location_counts(start, end)
     for loc in sorted(counts.keys()):
         table.add_row(loc, str(counts[loc]))
     console.print(table)
 
 @app.command("list-shoes")
-def list_shoes_cmd() -> None:
+def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+                   year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
     """List all shoes."""
     table = Table(title="Shoes")
     table.add_column("Shoe", style="cyan")
     table.add_column("Count", justify="right")
-    counts = _find_shoe_counts()
+    start, end = _date_range(month, year)
+    counts = query.find_shoe_counts(start, end)
     for shoe in sorted(counts.keys()):
         table.add_row(shoe, str(counts[shoe]))
     console.print(table)
 
 @app.command("list-boards")
-def list_boards_cmd() -> None:
+def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+                    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
     """List all boards."""
     table = Table(title="Boards")
     table.add_column("Board", style="cyan")
     table.add_column("Count", justify="right")
-    counts = _find_board_counts()
+    start, end = _date_range(month, year)
+    counts = query.find_board_counts(start, end)
     for board in sorted(counts.keys()):
         table.add_row(board, str(counts[board]))
     console.print(table)
