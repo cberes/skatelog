@@ -198,6 +198,14 @@ def _year_range(year: str) -> tuple[date, date]:
     end = date(start.year + 1, start.month, start.day)
     return (start, end)
 
+def _find_by_date_range(start: date, end: date) -> Iterator[Session]:
+    engine = get_engine()
+    with DBSession(engine) as db:
+        statement = select(Session).where(Session.day >= start, Session.day < end)
+        sessions = db.exec(statement)
+        for session in sessions:
+            yield session
+
 @app.command("list")
 def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
              year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
@@ -216,13 +224,16 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     table.add_column("Board")
     table.add_column("Notes")
 
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(Session).where(Session.day >= start, Session.day < end)
-        sessions = db.exec(statement)
-        for session in sessions:
-            table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
+    for session in _find_by_date_range(start, end):
+        table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
     console.print(table)
+
+def _find_discipline_counts(start: date | None = None) -> dict[Discipline, int]:
+    counts = {d: 0 for d in Discipline}
+    for session in _find_by_date_range(start or date.min, date.max):
+        for d in session.disciplines:
+            counts[d] += 1
+    return counts
 
 @app.command("list-disciplines")
 def list_disciplines_cmd() -> None:
@@ -230,9 +241,9 @@ def list_disciplines_cmd() -> None:
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
     table.add_column("Count", justify="right")
-    counts = {}
-    for d in Discipline:
-        table.add_row(d, str(counts.get(str(d), 0)))
+    counts = _find_discipline_counts()
+    for d in sorted(counts.keys()):
+        table.add_row(str(d), str(counts[d]))
     console.print(table)
 
 @app.command("list-locations")
@@ -242,8 +253,8 @@ def list_locations_cmd() -> None:
     table.add_column("Where", style="cyan")
     table.add_column("Count", justify="right")
     counts = _find_location_counts()
-    for loc in sorted(_find_locations()):
-        table.add_row(loc, str(counts.get(loc, 0)))
+    for loc in sorted(counts.keys()):
+        table.add_row(loc, str(counts[loc]))
     console.print(table)
 
 @app.command("list-shoes")
@@ -253,8 +264,8 @@ def list_shoes_cmd() -> None:
     table.add_column("Shoe", style="cyan")
     table.add_column("Count", justify="right")
     counts = _find_shoe_counts()
-    for shoe in sorted(_find_shoes()):
-        table.add_row(shoe, str(counts.get(shoe, 0)))
+    for shoe in sorted(counts.keys()):
+        table.add_row(shoe, str(counts[shoe]))
     console.print(table)
 
 @app.command("list-boards")
@@ -264,8 +275,8 @@ def list_boards_cmd() -> None:
     table.add_column("Board", style="cyan")
     table.add_column("Count", justify="right")
     counts = _find_board_counts()
-    for board in sorted(_find_boards()):
-        table.add_row(board, str(counts.get(board, 0)))
+    for board in sorted(counts.keys()):
+        table.add_row(board, str(counts[board]))
     console.print(table)
 
 def main() -> None:
