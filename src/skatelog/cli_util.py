@@ -28,6 +28,8 @@ def find_by_startswith(value: str, options: list[str], new_value: Callable[[str]
 def find_disciplines(disciplines: str | None, skipped: Callable[[str], None]) -> dict[str, bool]:
     discipline_flags = {}
     for d in (disciplines or "").split(","):
+        if not d or d.isspace():
+            continue
         matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
         if len(matches) == 1:
             discipline_flags.update(matches)
