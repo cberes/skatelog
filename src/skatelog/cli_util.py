@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Callable
 
-DISCIPLINE_ATTRS = [
+_DISCIPLINE_ATTRS = [
     "a_frame",
     "bank",
     "bowl",
@@ -30,7 +30,7 @@ def find_disciplines(disciplines: str | None, skipped: Callable[[str], None]) ->
     for d in (disciplines or "").split(","):
         if not d or d.isspace():
             continue
-        matches = {attr: True for attr in DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
+        matches = {attr: True for attr in _DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
         if len(matches) == 1:
             discipline_flags.update(matches)
         elif len(matches) > 1:
