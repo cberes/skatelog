@@ -20,8 +20,7 @@ console = Console()
 @app.command("import")
 def import_cmd(csv_path: Annotated[Path, typer.Argument(exists=True, readable=True)]) -> None:
     """Imports sessions from a CSV file."""
-    engine = get_engine()
-    with DBSession(engine) as db:
+    with DBSession(get_engine()) as db:
         n = import_csv(csv_path, db)
     console.print(f"[green]Imported {n} sessions[/green]")
 
@@ -39,11 +38,12 @@ def _session_table(session: Session) -> Table:
 def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     """Show a day's session."""
     target = date.fromisoformat(day)
-    session = query.find_session(target)
-    if session is None:
-        console.print(f"[yellow]No session logged for {target}[/yellow]")
-        raise typer.Exit(code=1)
-    console.print(_session_table(session))
+    with DBSession(get_engine()) as db:
+        session = query.find_session(db, target)
+        if session is None:
+            console.print(f"[yellow]No session logged for {target}[/yellow]")
+            raise typer.Exit(code=1)
+        console.print(_session_table(session))
 
 def _find_recent_locations() -> list[str]:
     return query.find_locations()
@@ -103,14 +103,16 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
         console.print("[red]Not saving incomplete session[/red]")
         raise typer.Exit(code=1)
 
-    console.print(f"[green]Saving session for {session.day}[/green]")
-    console.print(_session_table(session))
-    query.create_session(session)
+    with DBSession(get_engine()) as db:
+        query.create_session(db, session)
+        console.print(f"[green]Saving session for {session.day}[/green]")
+        console.print(_session_table(session))
 
 @app.command("delete")
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     target = date.fromisoformat(day)
-    query.delete_session(target)
+    with DBSession(get_engine()) as db:
+        query.delete_session(db, target)
 
 @app.command("list")
 def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,

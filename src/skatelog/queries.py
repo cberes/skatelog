@@ -6,11 +6,9 @@ from sqlmodel import select
 from skatelog.db import get_engine
 from skatelog.models import Discipline, Session
 
-def find_session(target: date) -> Session | None:
+def find_session(db: DBSession, target: date) -> Session | None:
     """Show a day's session."""
-    engine = get_engine()
-    with DBSession(engine) as db:
-        return db.get(Session, target)
+    return db.get(Session, target)
 
 # TODO what's the type of col?
 def _find_values(col, start: date | None, end: date | None) -> dict[str, int]:
@@ -54,18 +52,14 @@ def find_most_recent_session() -> Session | None:
             .limit(1)
         return db.exec(statement).first()
 
-def create_session(session: Session) -> None:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        _delete_by_day(db, session.day)
-        db.add(session)
-        db.commit()
+def create_session(db: DBSession, session: Session) -> None:
+    _delete_by_day(db, session.day)
+    db.add(session)
+    db.commit()
 
-def delete_session(target: date) -> None:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        _delete_by_day(db, target)
-        db.commit()
+def delete_session(db: DBSession, target: date) -> None:
+    _delete_by_day(db, target)
+    db.commit()
 
 def find_by_date_range(start: date, end: date) -> Iterator[Session]:
     engine = get_engine()
