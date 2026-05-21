@@ -34,7 +34,7 @@ def find_by_startswith(value: str, options: list[str]) -> OptionResult:
     try:
         return OptionResult(next(o for o in options if o.lower().startswith(value.lower())))
     except StopIteration:
-        return OptionResult(value, True)
+        return OptionResult(value, new=True)
 
 def find_disciplines(disciplines: str | None) -> DisciplineResult:
     result = DisciplineResult({}, [], [])

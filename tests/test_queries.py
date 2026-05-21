@@ -19,14 +19,7 @@ def test_find_session_returns_none_when_no_session(db: DBSession) -> None:
 
 def test_find_session_returns_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
-    session = Session(
-        day=day,
-        where="Skatepark",
-        shoe="Vulc",
-        board="Egg",
-        notes="kickflip",
-        a_frame=True,
-    )
+    session = _session_skatepark(day)
     db.add(session)
     db.commit()
     found = q.find_session(db, day)
@@ -36,14 +29,7 @@ def test_find_session_returns_session(db: DBSession) -> None:
 
 def test_create_session_persists_new_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
-    session = Session(
-        day=day,
-        where="Skatepark",
-        shoe="Vulc",
-        board="Egg",
-        notes="kickflip",
-        a_frame=True,
-    )
+    session = _session_skatepark(day)
     q.create_session(db, session)
     found = db.get(Session, day)
     assert found is not None
@@ -52,24 +38,10 @@ def test_create_session_persists_new_session(db: DBSession) -> None:
 
 def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
-    session1 = Session(
-        day=day,
-        where="Skatepark",
-        shoe="Vulc",
-        board="Egg",
-        notes="kickflip",
-        a_frame=True,
-    )
+    session1 = _session_skatepark(day)
     db.add(session1)
     db.commit()
-    session2 = Session(
-        day=day,
-        where="Tennis Court",
-        shoe="Cupsole",
-        board="Popsicle",
-        notes="heelflip",
-        bowl=True,
-    )
+    session2 = _session_tennis_court(day)
     q.create_session(db, session2)
     found = db.get(Session, day)
     assert found is not None
@@ -78,7 +50,15 @@ def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
 
 def test_delete_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
-    session = Session(
+    session = _session_skatepark(day)
+    db.add(session)
+    db.commit()
+    assert db.get(Session, day) is not None
+    q.delete_session(db, day)
+    assert db.get(Session, day) is None
+
+def _session_skatepark(day: date) -> Session:
+    return Session(
         day=day,
         where="Skatepark",
         shoe="Vulc",
@@ -86,9 +66,13 @@ def test_delete_session(db: DBSession) -> None:
         notes="kickflip",
         a_frame=True,
     )
-    db.add(session)
-    db.commit()
-    assert db.get(Session, day) is not None
-    q.delete_session(db, day)
-    assert db.get(Session, day) is None
 
+def _session_tennis_court(day: date) -> Session:
+    return Session(
+        day=day,
+        where="Tennis Court",
+        shoe="Cupsole",
+        board="Popsicle",
+        notes="heelflip",
+        bowl=True,
+    )
