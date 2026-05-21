@@ -1,5 +1,17 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Callable
+
+@dataclass
+class OptionResult:
+    found: str | None
+    new: bool = False
+
+@dataclass
+class DisciplineResult:
+    found: dict[str, bool]
+    ambiguous: list[str]
+    unknown: list[str]
 
 _DISCIPLINE_ATTRS = [
     "a_frame",
@@ -16,26 +28,28 @@ _DISCIPLINE_ATTRS = [
     "vert",
 ]
 
-def find_by_startswith(value: str, options: list[str], new_value: Callable[[str], None]) -> str | None:
+def find_by_startswith(value: str, options: list[str]) -> OptionResult:
     if (value or "-") == "-":
-        return None
+        return OptionResult(None)
     try:
-        return next(o for o in options if o.lower().startswith(value.lower()))
+        return OptionResult(next(o for o in options if o.lower().startswith(value.lower())))
     except StopIteration:
-        new_value(value)
-        return value
+        return OptionResult(value, True)
 
-def find_disciplines(disciplines: str | None, skipped: Callable[[str], None]) -> dict[str, bool]:
-    discipline_flags = {}
+def find_disciplines(disciplines: str | None) -> DisciplineResult:
+    result = DisciplineResult({}, [], [])
     for d in (disciplines or "").split(","):
         if not d or d.isspace():
             continue
         matches = {attr: True for attr in _DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
-        if len(matches) == 1:
-            discipline_flags.update(matches)
-        elif len(matches) > 1:
-            skipped(d)
-    return discipline_flags
+        match len(matches):
+            case 0:
+                result.unknown.append(d)
+            case 1:
+                result.found.update(matches)
+            case x if x > 1:
+                result.ambiguous.append(d)
+    return result
 
 def _month_range(month: str) -> tuple[date, date]:
     start = date.strptime(month, "%Y-%m")

@@ -80,24 +80,32 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
     # The spreasdsheet has select inputs, so I can easily pick the right options
     # I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
     # but IDK if I can do that. so...try to find an value from the list of existing values
-    new_value = lambda value: console.print(f"[yellow]Adding new value: {value}[/yellow]")
-    skipped = lambda d: console.print(f"[red]Skipping ambiguous discipline: {d}[/red]")
+    where_result = find_by_startswith(where, query.find_locations())
+    shoe_result = find_by_startswith(shoe, query.find_shoes())
+    board_result = find_by_startswith(board, query.find_boards())
+    disc_result = find_disciplines(disciplines)
+    for category, result in (("location", where_result), ("shoe", shoe_result), ("board", board_result)):
+        if result.new:
+            console.print(f"[yellow]Adding new {category}: {result.found}[/yellow]")
+    for k, values in [("ambiguous", disc_result.ambiguous), ("unknown", disc_result.unknown)]:
+        for v in values:
+            console.print(f"[red]Skipping {k} discipline: {v}[/red]")
     session = Session(
         day=date.fromisoformat(day),
-        where=find_by_startswith(where, query.find_locations(), new_value),
-        shoe=find_by_startswith(shoe, query.find_shoes(), new_value),
-        board=find_by_startswith(board, query.find_boards(), new_value),
+        where=where_result.found,
+        shoe=shoe_result.found,
+        board=board_result.found,
         notes=_none_if_dash(notes),
-        **find_disciplines(disciplines, skipped),
+        **disc_result.found,
     )
 
     if not session.is_good:
         console.print("[red]Not saving incomplete session[/red]")
         raise typer.Exit(code=1)
 
-    query.create_session(session)
-    console.print(f"[green]Saved session for {session.day}[/green]")
+    console.print(f"[green]Saving session for {session.day}[/green]")
     console.print(_session_table(session))
+    query.create_session(session)
 
 @app.command("delete")
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
