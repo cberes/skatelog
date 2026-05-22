@@ -19,21 +19,27 @@ def _find_values(col, start: date | None, end: date | None) -> dict[str, int]:
             .group_by(col)
         return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
 
+# TODO test
 def find_location_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
     return _find_values(Session.where, start, end)
 
+# TODO test
 def find_shoe_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
     return _find_values(Session.shoe, start, end)
 
+# TODO test
 def find_board_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
     return _find_values(Session.board, start, end)
 
+# TODO test
 def find_locations(start: date | None = None) -> list[str]:
     return list(find_location_counts(start).keys())
 
+# TODO test
 def find_shoes(start: date | None = None) -> list[str]:
     return list(find_shoe_counts(start).keys())
 
+# TODO test
 def find_boards(start: date | None = None) -> list[str]:
     return list(find_board_counts(start).keys())
 
@@ -43,14 +49,12 @@ def _delete_by_day(db: DBSession, day: date) -> None:
         db.delete(existing)
         db.flush()
 
-def find_most_recent_session() -> Session | None:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(Session) \
-            .where(Session.where is not None, Session.shoe is not None, Session.board is not None) \
-            .order_by(Session.day.desc()) \
-            .limit(1)
-        return db.exec(statement).first()
+def find_most_recent_session(db: DBSession) -> Session | None:
+    statement = select(Session) \
+        .where(Session.where != None, Session.shoe != None, Session.board != None) \
+        .order_by(Session.day.desc()) \
+        .limit(1)
+    return db.exec(statement).first()
 
 def create_session(db: DBSession, session: Session) -> None:
     _delete_by_day(db, session.day)
@@ -61,17 +65,16 @@ def delete_session(db: DBSession, target: date) -> None:
     _delete_by_day(db, target)
     db.commit()
 
-def find_by_date_range(start: date, end: date) -> Iterator[Session]:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(Session).where(Session.day >= start, Session.day < end)
-        sessions = db.exec(statement)
-        for session in sessions:
-            yield session
+def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Session]:
+    statement = select(Session).where(Session.day >= start, Session.day < end) \
+        .order_by(Session.day)
+    sessions = db.exec(statement)
+    for session in sessions:
+        yield session
 
-def find_discipline_counts(start: date | None = None, end: date | None = None) -> dict[Discipline, int]:
+def find_discipline_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[Discipline, int]:
     counts = {d: 0 for d in Discipline}
-    for session in find_by_date_range(start or date.min, end or date.max):
+    for session in find_by_date_range(db, start or date.min, end or date.max):
         for d in session.disciplines:
             counts[d] += 1
     return counts

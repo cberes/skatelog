@@ -57,6 +57,54 @@ def test_delete_session(db: DBSession) -> None:
     q.delete_session(db, day)
     assert db.get(Session, day) is None
 
+def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
+    day1, day2 = (date(2026, 1, i + 1) for i in range(2))
+    session1 = _session_skatepark(day1)
+    session2 = _session_tennis_court(day2)
+    [db.add(s) for s in (session1, session2)]
+    db.commit()
+    most_recent = q.find_most_recent_session(db)
+    assert most_recent == session2
+
+def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
+    day1, day2 = (date(2026, 1, i + 1) for i in range(2))
+    session1 = _session_skatepark(day1)
+    session2 = _session_empty(day2)
+    [db.add(s) for s in (session1, session2)]
+    db.commit()
+    most_recent = q.find_most_recent_session(db)
+    assert most_recent == session1
+
+def test_find_by_date_range(db: DBSession) -> None:
+    days = [date(2026, 1, i + 1) for i in range(10)]
+    sessions = [_session_skatepark(d) for d in days]
+    [db.add(s) for s in sessions]
+    db.commit()
+    found = q.find_by_date_range(db, days[1], days[9])
+    assert list(found) == sessions[1:9]
+
+def test_find_discipline_counts_with_start_end_filters_by_day(db: DBSession) -> None:
+    days = [date(2026, 1, i + 1) for i in range(15)]
+    sessions1 = [_session_skatepark(d) for d in days[0:10]]
+    sessions2 = [_session_tennis_court(d) for d in days[10:15]]
+    [db.add(s) for s in (sessions1 + sessions2)]
+    db.commit()
+    counts = q.find_discipline_counts(db, start=days[1], end=days[14])
+    assert counts[Discipline.A_FRAME] == 9
+    assert counts[Discipline.BOWL] == 4
+    assert counts[Discipline.FLAT] == 0
+
+def test_find_discipline_counts_without_start_end_includes_all(db: DBSession) -> None:
+    days = [date(2026, 1, i + 1) for i in range(15)]
+    sessions1 = [_session_skatepark(d) for d in days[0:10]]
+    sessions2 = [_session_tennis_court(d) for d in days[10:15]]
+    [db.add(s) for s in (sessions1 + sessions2)]
+    db.commit()
+    counts = q.find_discipline_counts(db)
+    assert counts[Discipline.A_FRAME] == 10
+    assert counts[Discipline.BOWL] == 5
+    assert counts[Discipline.FLAT] == 0
+
 def _session_skatepark(day: date) -> Session:
     return Session(
         day=day,
@@ -76,3 +124,6 @@ def _session_tennis_court(day: date) -> Session:
         notes="heelflip",
         bowl=True,
     )
+
+def _session_empty(day: date) -> Session:
+    return Session(day=day)

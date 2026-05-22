@@ -55,16 +55,19 @@ def _find_recent_boards() -> list[str]:
     return query.find_boards()
 
 def _most_recent_location() -> str:
-    session = query.find_most_recent_session()
-    return (session is not None and session.where) or ""
+    with DBSession(get_engine()) as db:
+        session = query.find_most_recent_session(db)
+        return (session is not None and session.where) or ""
 
 def _most_recent_shoe() -> str:
-    session = query.find_most_recent_session()
-    return (session is not None and session.shoe) or ""
+    with DBSession(get_engine()) as db:
+        session = query.find_most_recent_session(db)
+        return (session is not None and session.shoe) or ""
 
 def _most_recent_board() -> str:
-    session = query.find_most_recent_session()
-    return (session is not None and session.board) or ""
+    with DBSession(get_engine()) as db:
+        session = query.find_most_recent_session(db)
+        return (session is not None and session.board) or ""
 
 def _none_if_dash(s: str | None) -> str | None:
     return None if s == "-" else s
@@ -126,8 +129,9 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     table.add_column("Notes")
 
     start, end = date_range(month, year)
-    for session in query.find_by_date_range(start, end):
-        table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
+    with DBSession(get_engine()) as db:
+        for session in query.find_by_date_range(db, start, end):
+            table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
     console.print(table)
 
 @app.command("list-disciplines")
@@ -138,7 +142,8 @@ def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter 
     table.add_column("Discipline", style="cyan")
     table.add_column("Count", justify="right")
     start, end = date_range(month, year)
-    counts = query.find_discipline_counts(start, end)
+    with DBSession(get_engine()) as db:
+        counts = query.find_discipline_counts(db, start, end)
     for d in sorted(counts.keys()):
         table.add_row(str(d), str(counts[d]))
     console.print(table)
