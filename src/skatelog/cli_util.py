@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable
+from typing import Callable, Iterable
 
 @dataclass
 class OptionResult:
@@ -28,7 +28,7 @@ _DISCIPLINE_ATTRS = [
     "vert",
 ]
 
-def find_by_startswith(value: str, options: list[str]) -> OptionResult:
+def find_by_startswith(value: str, options: Iterable[str]) -> OptionResult:
     if (value or "-") == "-":
         return OptionResult(None)
     try:

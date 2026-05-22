@@ -95,11 +95,11 @@ class TestCountByDateRange:
 
     def test_find_locations_with_start_filters_by_day(self, db: DBSession) -> None:
         found = q.find_locations(db, start=self.days[-1])
-        assert found == {"Tennis Count"}
+        assert found == {"Tennis Court"}
 
     def test_find_locations_without_start_includes_all(self, db: DBSession) -> None:
         found = q.find_locations(db)
-        assert found == {"Skatepark", "Tennis Count"}
+        assert found == {"Skatepark", "Tennis Court"}
 
     def test_find_shoes_with_start_filters_by_day(self, db: DBSession) -> None:
         found = q.find_shoes(db, start=self.days[-1])

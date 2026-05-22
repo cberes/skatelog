@@ -45,15 +45,15 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
             raise typer.Exit(code=1)
         console.print(_session_table(session))
 
-def _find_recent_locations() -> list[str]:
+def _find_recent_locations() -> set[str]:
     with DBSession(get_engine()) as db:
         return query.find_locations(db)
 
-def _find_recent_shoes() -> list[str]:
+def _find_recent_shoes() -> set[str]:
     with DBSession(get_engine()) as db:
         return query.find_shoes(db)
 
-def _find_recent_boards() -> list[str]:
+def _find_recent_boards() -> set[str]:
     with DBSession(get_engine()) as db:
         return query.find_boards(db)
 
