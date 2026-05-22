@@ -58,13 +58,14 @@ def test_delete_session(db: DBSession) -> None:
     assert db.get(Session, day) is None
 
 def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
-    day1, day2 = (date(2026, 1, i + 1) for i in range(2))
+    day1, day2, day3 = (date(2026, 1, i + 1) for i in range(3))
     session1 = _session_skatepark(day1)
-    session2 = _session_tennis_court(day2)
-    [db.add(s) for s in (session1, session2)]
+    session2 = _session_skatepark(day2)
+    session3 = _session_tennis_court(day3)
+    [db.add(s) for s in (session1, session3, session2)]
     db.commit()
     most_recent = q.find_most_recent_session(db)
-    assert most_recent == session2
+    assert most_recent == session3
 
 def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
     day1, day2 = (date(2026, 1, i + 1) for i in range(2))
