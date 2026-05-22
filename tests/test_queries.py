@@ -83,27 +83,87 @@ def test_find_by_date_range(db: DBSession) -> None:
     found = q.find_by_date_range(db, days[1], days[9])
     assert list(found) == sessions[1:9]
 
-def test_find_discipline_counts_with_start_end_filters_by_day(db: DBSession) -> None:
-    days = [date(2026, 1, i + 1) for i in range(15)]
-    sessions1 = [_session_skatepark(d) for d in days[0:10]]
-    sessions2 = [_session_tennis_court(d) for d in days[10:15]]
-    [db.add(s) for s in (sessions1 + sessions2)]
-    db.commit()
-    counts = q.find_discipline_counts(db, start=days[1], end=days[14])
-    assert counts[Discipline.A_FRAME] == 9
-    assert counts[Discipline.BOWL] == 4
-    assert counts[Discipline.FLAT] == 0
+class TestCountByDateRange:
+    @pytest.fixture(autouse=True)
+    def setup_db(self, db: DBSession) -> None:
+        days = [date(2026, 1, i + 1) for i in range(15)]
+        self.days = days
+        sessions1 = [_session_skatepark(d) for d in days[0:10]]
+        sessions2 = [_session_tennis_court(d) for d in days[10:15]]
+        [db.add(s) for s in (sessions1 + sessions2)]
+        db.commit()
 
-def test_find_discipline_counts_without_start_end_includes_all(db: DBSession) -> None:
-    days = [date(2026, 1, i + 1) for i in range(15)]
-    sessions1 = [_session_skatepark(d) for d in days[0:10]]
-    sessions2 = [_session_tennis_court(d) for d in days[10:15]]
-    [db.add(s) for s in (sessions1 + sessions2)]
-    db.commit()
-    counts = q.find_discipline_counts(db)
-    assert counts[Discipline.A_FRAME] == 10
-    assert counts[Discipline.BOWL] == 5
-    assert counts[Discipline.FLAT] == 0
+    def test_find_locations_with_start_filters_by_day(self, db: DBSession) -> None:
+        found = q.find_locations(db, start=self.days[-1])
+        assert found == {"Tennis Count"}
+
+    def test_find_locations_without_start_includes_all(self, db: DBSession) -> None:
+        found = q.find_locations(db)
+        assert found == {"Skatepark", "Tennis Count"}
+
+    def test_find_shoes_with_start_filters_by_day(self, db: DBSession) -> None:
+        found = q.find_shoes(db, start=self.days[-1])
+        assert found == {"Cupsole"}
+
+    def test_find_shoes_without_start_includes_all(self, db: DBSession) -> None:
+        found = q.find_shoes(db)
+        assert found == {"Vulc", "Cupsole"}
+
+    def test_find_boards_with_start_filters_by_day(self, db: DBSession) -> None:
+        found = q.find_boards(db, start=self.days[-1])
+        assert found == {"Popsicle"}
+
+    def test_find_boards_without_start_includes_all(self, db: DBSession) -> None:
+        found = q.find_boards(db)
+        assert found == {"Egg", "Popsicle"}
+
+    def test_find_location_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        counts = q.find_location_counts(db, start=self.days[1], end=self.days[14])
+        assert counts["Skatepark"] == 9
+        assert counts["Tennis Court"] == 4
+        assert len(counts) == 2
+
+    def test_find_location_counts_without_start_end_includes_all(self, db: DBSession) -> None:
+        counts = q.find_location_counts(db)
+        assert counts["Skatepark"] == 10
+        assert counts["Tennis Court"] == 5
+        assert len(counts) == 2
+
+    def test_find_shoe_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        counts = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
+        assert counts["Vulc"] == 9
+        assert counts["Cupsole"] == 4
+        assert len(counts) == 2
+
+    def test_find_shoe_counts_without_start_end_includes_all(self, db: DBSession) -> None:
+        counts = q.find_shoe_counts(db)
+        assert counts["Vulc"] == 10
+        assert counts["Cupsole"] == 5
+        assert len(counts) == 2
+
+    def test_find_board_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        counts = q.find_board_counts(db, start=self.days[1], end=self.days[14])
+        assert counts["Egg"] == 9
+        assert counts["Popsicle"] == 4
+        assert len(counts) == 2
+
+    def test_find_board_counts_without_start_end_includes_all(self, db: DBSession) -> None:
+        counts = q.find_board_counts(db)
+        assert counts["Egg"] == 10
+        assert counts["Popsicle"] == 5
+        assert len(counts) == 2
+
+    def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        counts = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
+        assert counts[Discipline.A_FRAME] == 9
+        assert counts[Discipline.BOWL] == 4
+        assert counts[Discipline.FLAT] == 0
+
+    def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
+        counts = q.find_discipline_counts(db)
+        assert counts[Discipline.A_FRAME] == 10
+        assert counts[Discipline.BOWL] == 5
+        assert counts[Discipline.FLAT] == 0
 
 def _session_skatepark(day: date) -> Session:
     return Session(

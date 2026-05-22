@@ -46,13 +46,16 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
         console.print(_session_table(session))
 
 def _find_recent_locations() -> list[str]:
-    return query.find_locations()
+    with DBSession(get_engine()) as db:
+        return query.find_locations(db)
 
 def _find_recent_shoes() -> list[str]:
-    return query.find_shoes()
+    with DBSession(get_engine()) as db:
+        return query.find_shoes(db)
 
 def _find_recent_boards() -> list[str]:
-    return query.find_boards()
+    with DBSession(get_engine()) as db:
+        return query.find_boards(db)
 
 def _most_recent_location() -> str:
     with DBSession(get_engine()) as db:
@@ -83,10 +86,11 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
     # The spreasdsheet has select inputs, so I can easily pick the right options
     # I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
     # but IDK if I can do that. so...try to find an value from the list of existing values
-    where_result = find_by_startswith(where, query.find_locations())
-    shoe_result = find_by_startswith(shoe, query.find_shoes())
-    board_result = find_by_startswith(board, query.find_boards())
     disc_result = find_disciplines(disciplines)
+    with DBSession(get_engine()) as db:
+        where_result = find_by_startswith(where, query.find_locations(db))
+        shoe_result = find_by_startswith(shoe, query.find_shoes(db))
+        board_result = find_by_startswith(board, query.find_boards(db))
     for category, result in (("location", where_result), ("shoe", shoe_result), ("board", board_result)):
         if result.new:
             console.print(f"[yellow]Adding new {category}: {result.found}[/yellow]")
@@ -156,7 +160,8 @@ def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to
     table.add_column("Where", style="cyan")
     table.add_column("Count", justify="right")
     start, end = date_range(month, year)
-    counts = query.find_location_counts(start, end)
+    with DBSession(get_engine()) as db:
+        counts = query.find_location_counts(db, start, end)
     for loc in sorted(counts.keys()):
         table.add_row(loc, str(counts[loc]))
     console.print(table)
@@ -169,7 +174,8 @@ def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYY
     table.add_column("Shoe", style="cyan")
     table.add_column("Count", justify="right")
     start, end = date_range(month, year)
-    counts = query.find_shoe_counts(start, end)
+    with DBSession(get_engine()) as db:
+        counts = query.find_shoe_counts(db, start, end)
     for shoe in sorted(counts.keys()):
         table.add_row(shoe, str(counts[shoe]))
     console.print(table)
@@ -182,7 +188,8 @@ def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
     table.add_column("Board", style="cyan")
     table.add_column("Count", justify="right")
     start, end = date_range(month, year)
-    counts = query.find_board_counts(start, end)
+    with DBSession(get_engine()) as db:
+        counts = query.find_board_counts(db, start, end)
     for board in sorted(counts.keys()):
         table.add_row(board, str(counts[board]))
     console.print(table)

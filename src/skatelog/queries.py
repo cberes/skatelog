@@ -11,37 +11,29 @@ def find_session(db: DBSession, target: date) -> Session | None:
     return db.get(Session, target)
 
 # TODO what's the type of col?
-def _find_values(col, start: date | None, end: date | None) -> dict[str, int]:
-    engine = get_engine()
-    with DBSession(engine) as db:
-        statement = select(col, func.count(Session.day)) \
-            .where(Session.day >= (start or date.min), Session.day < (end or date.max)) \
-            .group_by(col)
-        return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
+def _find_values(db: DBSession, col, start: date | None, end: date | None) -> dict[str, int]:
+    statement = select(col, func.count(Session.day)) \
+        .where(Session.day >= (start or date.min), Session.day < (end or date.max)) \
+        .group_by(col)
+    return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
 
-# TODO test
-def find_location_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
-    return _find_values(Session.where, start, end)
+def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+    return _find_values(db, Session.where, start, end)
 
-# TODO test
-def find_shoe_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
-    return _find_values(Session.shoe, start, end)
+def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+    return _find_values(db, Session.shoe, start, end)
 
-# TODO test
-def find_board_counts(start: date | None = None, end: date | None = None) -> dict[str, int]:
-    return _find_values(Session.board, start, end)
+def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+    return _find_values(db, Session.board, start, end)
 
-# TODO test
-def find_locations(start: date | None = None) -> list[str]:
-    return list(find_location_counts(start).keys())
+def find_locations(db: DBSession, start: date | None = None) -> list[str]:
+    return list(find_location_counts(db, start).keys())
 
-# TODO test
-def find_shoes(start: date | None = None) -> list[str]:
-    return list(find_shoe_counts(start).keys())
+def find_shoes(db: DBSession, start: date | None = None) -> list[str]:
+    return list(find_shoe_counts(db, start).keys())
 
-# TODO test
-def find_boards(start: date | None = None) -> list[str]:
-    return list(find_board_counts(start).keys())
+def find_boards(db: DBSession, start: date | None = None) -> list[str]:
+    return list(find_board_counts(db, start).keys())
 
 def _delete_by_day(db: DBSession, day: date) -> None:
     existing = db.get(Session, day)
