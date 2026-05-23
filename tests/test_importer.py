@@ -15,6 +15,7 @@ def db() -> Iterator[DBSession]:
     SQLModel.metadata.create_all(engine)
     with DBSession(engine) as session:
         yield session
+    SQLModel.metadata.drop_all(engine)
 
 def _by_date(csv_path: Path) -> dict[str, Session]:
     return {s.day.isoformat(): s for s in parse_rows(csv_path)}

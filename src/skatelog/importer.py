@@ -10,13 +10,17 @@ CsvRow: TypeAlias = dict[str, str | None]
 
 _DISCIPLINE_COLUMNS: dict[str, str] = {
     "a/hip": "a_frame",
+    "bank": "bank",
     "bowl": "bowl",
     "box": "box",
     "flat": "flat",
+    "free": "free",
+    "hip": "hip",
     "mnl": "manual",
     "rail": "rail",
     "slappy": "slappy",
     "tran": "transition",
+    "vert": "vert",
 }
 
 def _to_bool(row: CsvRow, key: str) -> bool:

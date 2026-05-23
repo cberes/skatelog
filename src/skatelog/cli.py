@@ -8,6 +8,7 @@ from sqlmodel import Session as DBSession
 from sqlmodel import select
 from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
 from skatelog.db import get_engine
+from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
 from skatelog.models import Discipline, Session
 import skatelog.queries as query
@@ -18,11 +19,18 @@ app = typer.Typer(help="Skateboarding session log.")
 console = Console()
 
 @app.command("import")
-def import_cmd(csv_path: Annotated[Path, typer.Argument(exists=True, readable=True)]) -> None:
+def import_cmd(csv_path: Annotated[Path, typer.Argument(exists=True, readable=True, dir_okay=False)]) -> None:
     """Imports sessions from a CSV file."""
     with DBSession(get_engine()) as db:
         n = import_csv(csv_path, db)
     console.print(f"[green]Imported {n} sessions[/green]")
+
+@app.command("export")
+def export_cmd(csv_path: Annotated[Path, typer.Argument(writable=True, dir_okay=False)]) -> None:
+    """Exports sessions to a CSV file."""
+    with DBSession(get_engine()) as db:
+        n = export_csv(csv_path, db)
+    console.print(f"[green]Exported {n} sessions[/green]")
 
 def _session_table(session: Session) -> Table:
     table = Table(title=str(session.day), show_header=False)

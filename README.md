@@ -32,7 +32,8 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - `uv run skatelog list-locations` lists all known locations and how many times they were visited
 - `uv run skatelog list-shoes` lists all known shoes and how many times they were worn
 - `uv run skatelog list-boards` lists all known boards and how many times there were skated
-- `uv run skatelog import /path/to/file.csv` imports data from a spreadsheet
+- `uv run skatelog import /path/to/import.csv` imports data from a CSV file
+- `uv run skatelog export /path/to/export.csv` exports data to a CSV file
 
 ## Development
 
