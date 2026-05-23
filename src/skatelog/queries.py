@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from dataclasses import dataclass
 from datetime import date
 from sqlalchemy import func
 from sqlmodel import Session as DBSession
@@ -11,29 +12,40 @@ def find_session(db: DBSession, target: date) -> Session | None:
     """Show a day's session."""
     return db.get(Session, target)
 
-def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> dict[str, int]:
-    statement = select(column, func.count(col(Session.day))) \
-        .where(Session.day >= (start or date.min), Session.day < (end or date.max)) \
-        .group_by(column)
-    return {str(x[0]): x[1] for x in db.exec(statement) if x[0] is not None}
+@dataclass
+class SessionAggregate:
+    key: str
+    count: int
+    start: date
+    end: date
 
-def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+    @classmethod
+    def from_tuple(cls, t: tuple[Any, int, date, date]) -> SessionAggregate:
+        return SessionAggregate(str(t[0]), t[1], t[2], t[3])
+
+def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> list[SessionAggregate]:
+    statement = select(column, func.count(col(Session.day)), func.min(col(Session.day)), func.max(col(Session.day))) \
+        .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max)) \
+        .group_by(column)
+    return [SessionAggregate.from_tuple(it) for it in db.exec(statement)]
+
+def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
     return _find_values(db, Session.where, start, end)
 
-def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
     return _find_values(db, Session.shoe, start, end)
 
-def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[str, int]:
+def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
     return _find_values(db, Session.board, start, end)
 
 def find_locations(db: DBSession, start: date | None = None) -> set[str]:
-    return set(find_location_counts(db, start).keys())
+    return set(it.key for it in find_location_counts(db, start))
 
 def find_shoes(db: DBSession, start: date | None = None) -> set[str]:
-    return set(find_shoe_counts(db, start).keys())
+    return set(it.key for it in find_shoe_counts(db, start))
 
 def find_boards(db: DBSession, start: date | None = None) -> set[str]:
-    return set(find_board_counts(db, start).keys())
+    return set(it.key for it in find_board_counts(db, start))
 
 def _delete_by_day(db: DBSession, day: date) -> None:
     existing = db.get(Session, day)

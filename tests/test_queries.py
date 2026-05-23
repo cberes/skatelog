@@ -119,40 +119,82 @@ class TestCountByDateRange:
         assert found == {"Egg", "Popsicle"}
 
     def test_find_location_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-        counts = q.find_location_counts(db, start=self.days[1], end=self.days[14])
-        assert counts["Skatepark"] == 9
-        assert counts["Tennis Court"] == 4
-        assert len(counts) == 2
+        aggs = q.find_location_counts(db, start=self.days[1], end=self.days[14])
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Tennis Court"
+        assert aggs[0].count == 4
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[13]
+        assert aggs[1].key == "Skatepark"
+        assert aggs[1].count == 9
+        assert aggs[1].start == self.days[1]
+        assert aggs[1].end == self.days[9]
 
-    def test_find_location_counts_without_start_end_includes_all(self, db: DBSession) -> None:
-        counts = q.find_location_counts(db)
-        assert counts["Skatepark"] == 10
-        assert counts["Tennis Court"] == 5
-        assert len(counts) == 2
+    def test_find_location_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+        aggs = q.find_location_counts(db)
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Tennis Court"
+        assert aggs[0].count == 5
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[14]
+        assert aggs[1].key == "Skatepark"
+        assert aggs[1].count == 10
+        assert aggs[1].start == self.days[0]
+        assert aggs[1].end == self.days[9]
 
-    def test_find_shoe_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-        counts = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
-        assert counts["Vulc"] == 9
-        assert counts["Cupsole"] == 4
-        assert len(counts) == 2
+    def test_find_shoe_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        aggs = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Cupsole"
+        assert aggs[0].count == 4
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[13]
+        assert aggs[1].key == "Vulc"
+        assert aggs[1].count == 9
+        assert aggs[1].start == self.days[1]
+        assert aggs[1].end == self.days[9]
 
-    def test_find_shoe_counts_without_start_end_includes_all(self, db: DBSession) -> None:
-        counts = q.find_shoe_counts(db)
-        assert counts["Vulc"] == 10
-        assert counts["Cupsole"] == 5
-        assert len(counts) == 2
+    def test_find_shoe_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+        aggs = q.find_shoe_counts(db)
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Cupsole"
+        assert aggs[0].count == 5
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[14]
+        assert aggs[1].key == "Vulc"
+        assert aggs[1].count == 10
+        assert aggs[1].start == self.days[0]
+        assert aggs[1].end == self.days[9]
 
-    def test_find_board_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-        counts = q.find_board_counts(db, start=self.days[1], end=self.days[14])
-        assert counts["Egg"] == 9
-        assert counts["Popsicle"] == 4
-        assert len(counts) == 2
+    def test_find_board_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
+        aggs = q.find_board_counts(db, start=self.days[1], end=self.days[14])
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Popsicle"
+        assert aggs[0].count == 4
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[13]
+        assert aggs[1].key == "Egg"
+        assert aggs[1].count == 9
+        assert aggs[1].start == self.days[1]
+        assert aggs[1].end == self.days[9]
 
-    def test_find_board_counts_without_start_end_includes_all(self, db: DBSession) -> None:
-        counts = q.find_board_counts(db)
-        assert counts["Egg"] == 10
-        assert counts["Popsicle"] == 5
-        assert len(counts) == 2
+    def test_find_board_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+        aggs = q.find_board_counts(db)
+        aggs = sorted(aggs, key=lambda it: it.count)
+        assert len(aggs) == 2
+        assert aggs[0].key == "Popsicle"
+        assert aggs[0].count == 5
+        assert aggs[0].start == self.days[10]
+        assert aggs[0].end == self.days[14]
+        assert aggs[1].key == "Egg"
+        assert aggs[1].count == 10
+        assert aggs[1].start == self.days[0]
+        assert aggs[1].end == self.days[9]
 
     def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
         counts = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])

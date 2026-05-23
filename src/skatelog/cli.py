@@ -167,11 +167,13 @@ def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to
     table = Table(title="Locations")
     table.add_column("Where", style="cyan")
     table.add_column("Count", justify="right")
+    table.add_column("Start", justify="right")
+    table.add_column("End", justify="right")
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
-        counts = query.find_location_counts(db, start, end)
-    for loc in sorted(counts.keys()):
-        table.add_row(loc, str(counts[loc]))
+        aggs = query.find_location_counts(db, start, end)
+    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
+        table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
     console.print(table)
 
 @app.command("list-shoes")
@@ -181,11 +183,13 @@ def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYY
     table = Table(title="Shoes")
     table.add_column("Shoe", style="cyan")
     table.add_column("Count", justify="right")
+    table.add_column("Start", justify="right")
+    table.add_column("End", justify="right")
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
-        counts = query.find_shoe_counts(db, start, end)
-    for shoe in sorted(counts.keys()):
-        table.add_row(shoe, str(counts[shoe]))
+        aggs = query.find_shoe_counts(db, start, end)
+    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
+        table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
     console.print(table)
 
 @app.command("list-boards")
@@ -195,11 +199,13 @@ def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
     table = Table(title="Boards")
     table.add_column("Board", style="cyan")
     table.add_column("Count", justify="right")
+    table.add_column("Start", justify="right")
+    table.add_column("End", justify="right")
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
-        counts = query.find_board_counts(db, start, end)
-    for board in sorted(counts.keys()):
-        table.add_row(board, str(counts[board]))
+        aggs = query.find_board_counts(db, start, end)
+    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
+        table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
     console.print(table)
 
 def main() -> None:
