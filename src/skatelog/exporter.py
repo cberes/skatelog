@@ -9,7 +9,7 @@ from typing import TypeAlias
 CsvRow: TypeAlias = dict[str, str | None]
 
 _DISCIPLINE_COLUMNS: dict[Discipline, str] = {
-    Discipline.A_FRAME: "A/Hip",
+    Discipline.A_FRAME: "A",
     Discipline.BANK: "Bank",
     Discipline.BOWL: "Bowl",
     Discipline.BOX: "Box",
@@ -25,7 +25,7 @@ _DISCIPLINE_COLUMNS: dict[Discipline, str] = {
 
 def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> None:
     field_names = ["Date", "Flat", "Free", "Box", "Rail", "Slappy",
-                   "A/Hip", "Hip", "Bank", "Mnl", "Tran", "Bowl",
+                   "A", "Hip", "Bank", "Mnl", "Tran", "Bowl",
                    "Vert", "Where", "Shoe", "Deck", "Notes"]
     with csv_path.open(mode="w", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=field_names)

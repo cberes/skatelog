@@ -9,7 +9,7 @@ from typing import TypeAlias
 CsvRow: TypeAlias = dict[str, str | None]
 
 _DISCIPLINE_COLUMNS: dict[str, str] = {
-    "a/hip": "a_frame",
+    "a": "a_frame",
     "bank": "bank",
     "bowl": "bowl",
     "box": "box",
