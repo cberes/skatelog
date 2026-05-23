@@ -33,7 +33,7 @@ def test_export_csv_with_sessions(db: DBSession) -> None:
         _session_notes_only(day3, "rest day"),
         _session_streets(day4),
     ]
-    [db.add(s) for s in sessions]
+    db.add_all(sessions)
     db.commit()
     csv_path = Path(gettempdir()) / "sessions.csv"
     exported = export_csv(csv_path, db)

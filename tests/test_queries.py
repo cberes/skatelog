@@ -62,7 +62,7 @@ def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
     session1 = _session_skatepark(day1)
     session2 = _session_skatepark(day2)
     session3 = _session_tennis_court(day3)
-    [db.add(s) for s in (session1, session3, session2)]
+    db.add_all([session1, session3, session2])
     db.commit()
     most_recent = q.find_most_recent_session(db)
     assert most_recent == session3
@@ -71,7 +71,7 @@ def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
     day1, day2 = (date(2026, 1, i + 1) for i in range(2))
     session1 = _session_skatepark(day1)
     session2 = _session_empty(day2)
-    [db.add(s) for s in (session1, session2)]
+    db.add_all([session1, session2])
     db.commit()
     most_recent = q.find_most_recent_session(db)
     assert most_recent == session1
@@ -79,7 +79,7 @@ def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
 def test_find_by_date_range(db: DBSession) -> None:
     days = [date(2026, 1, i + 1) for i in range(10)]
     sessions = [_session_skatepark(d) for d in days]
-    [db.add(s) for s in sessions]
+    db.add_all(sessions)
     db.commit()
     found = q.find_by_date_range(db, days[1], days[9])
     assert list(found) == sessions[1:9]
@@ -91,7 +91,7 @@ class TestCountByDateRange:
         self.days = days
         sessions1 = [_session_skatepark(d) for d in days[0:10]]
         sessions2 = [_session_tennis_court(d) for d in days[10:15]]
-        [db.add(s) for s in (sessions1 + sessions2)]
+        db.add_all(sessions1 + sessions2)
         db.commit()
 
     def test_find_locations_with_start_filters_by_day(self, db: DBSession) -> None:
