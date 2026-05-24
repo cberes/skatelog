@@ -58,7 +58,6 @@ def test_find_disciplines_with_none() -> None:
     assert result.ambiguous == []
     assert result.unknown == []
 
-# TODO IDK if this is good, but it's how it works :shrug:
 @pytest.mark.parametrize("test_input", ["-", "c"])
 def test_find_disciplines_with_unknown_inputs(test_input: str) -> None:
     result = find_disciplines(test_input)
