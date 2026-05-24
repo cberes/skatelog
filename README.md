@@ -1,7 +1,6 @@
 # skatelog
 
 A CLI for tracking skateboarding sessions.
-Stores data in a [SQLite](https://sqlite.org) database.
 
 ## Background
 
@@ -17,6 +16,13 @@ I decided to work on this project with the goal of re-learning Python.
 In an effort to actually _learn_ Python I'm writing everything by hand.
 Also, I've become interested in [tmux](https://github.com/tmux/tmux/)
 and [neovim](https://neovim.io/), so I'm using those tools as well.
+
+## Features
+
+- [Typer](https://typer.tiangolo.com/) CLI
+- Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
+- Stores data in a [SQLite](https://sqlite.org) database
+- Imports from and exports to CSV files
 
 ## Dependencies
 
