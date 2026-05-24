@@ -203,12 +203,16 @@ class TestCountByDateRange:
         assert aggs[0].count == 9
         assert aggs[0].start == self.days[1]
         assert aggs[0].end == self.days[9]
+        assert aggs[0].days_since is not None
+        assert aggs[0].days_since > 1
         assert aggs[1].key == str(Discipline.BANK)
         assert aggs[1].count == 0
+        assert aggs[1].days_since is None
         assert aggs[2].key == str(Discipline.BOWL)
         assert aggs[2].count == 4
         assert aggs[2].start == self.days[10]
         assert aggs[2].end == self.days[13]
+        assert aggs[2].days_since == aggs[0].days_since - 4
 
     def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
         aggs = q.find_discipline_counts(db)
@@ -217,12 +221,16 @@ class TestCountByDateRange:
         assert aggs[0].count == 10
         assert aggs[0].start == self.days[0]
         assert aggs[0].end == self.days[9]
+        assert aggs[0].days_since is not None
+        assert aggs[0].days_since > 1
         assert aggs[1].key == str(Discipline.BANK)
         assert aggs[1].count == 0
+        assert aggs[1].days_since is None
         assert aggs[2].key == str(Discipline.BOWL)
         assert aggs[2].count == 5
         assert aggs[2].start == self.days[10]
         assert aggs[2].end == self.days[14]
+        assert aggs[2].days_since == aggs[0].days_since - 5
 
 def _session_skatepark(day: date) -> Session:
     return Session(
