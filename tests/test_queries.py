@@ -197,16 +197,32 @@ class TestCountByDateRange:
         assert aggs[1].end == self.days[9]
 
     def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-        counts = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
-        assert counts[Discipline.A_FRAME] == 9
-        assert counts[Discipline.BOWL] == 4
-        assert counts[Discipline.FLAT] == 0
+        aggs = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
+        aggs = sorted(aggs, key=lambda it: it.key)
+        assert aggs[0].key == str(Discipline.A_FRAME)
+        assert aggs[0].count == 9
+        assert aggs[0].start == self.days[1]
+        assert aggs[0].end == self.days[9]
+        assert aggs[1].key == str(Discipline.BANK)
+        assert aggs[1].count == 0
+        assert aggs[2].key == str(Discipline.BOWL)
+        assert aggs[2].count == 4
+        assert aggs[2].start == self.days[10]
+        assert aggs[2].end == self.days[13]
 
     def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
-        counts = q.find_discipline_counts(db)
-        assert counts[Discipline.A_FRAME] == 10
-        assert counts[Discipline.BOWL] == 5
-        assert counts[Discipline.FLAT] == 0
+        aggs = q.find_discipline_counts(db)
+        aggs = sorted(aggs, key=lambda it: it.key)
+        assert aggs[0].key == str(Discipline.A_FRAME)
+        assert aggs[0].count == 10
+        assert aggs[0].start == self.days[0]
+        assert aggs[0].end == self.days[9]
+        assert aggs[1].key == str(Discipline.BANK)
+        assert aggs[1].count == 0
+        assert aggs[2].key == str(Discipline.BOWL)
+        assert aggs[2].count == 5
+        assert aggs[2].start == self.days[10]
+        assert aggs[2].end == self.days[14]
 
 def _session_skatepark(day: date) -> Session:
     return Session(

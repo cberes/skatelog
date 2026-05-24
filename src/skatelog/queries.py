@@ -19,6 +19,11 @@ class SessionAggregate:
     start: date
     end: date
 
+    @property
+    def days_since(self) -> int | None:
+        delta = date.today() - self.end
+        return delta.days if delta.days >= 0 else None
+
     @classmethod
     def from_tuple(cls, t: tuple[Any, int, date, date]) -> SessionAggregate:
         return SessionAggregate(str(t[0]), t[1], t[2], t[3])
@@ -76,9 +81,12 @@ def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Sessio
     for session in sessions:
         yield session
 
-def find_discipline_counts(db: DBSession, start: date | None = None, end: date | None = None) -> dict[Discipline, int]:
-    counts = {d: 0 for d in Discipline}
+def find_discipline_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
+    aggs = {d: SessionAggregate(str(d), 0, date.max, date.max) for d in Discipline}
     for session in find_by_date_range(db, start or date.min, end or date.max):
         for d in session.disciplines:
-            counts[d] += 1
-    return counts
+            agg = aggs[d]
+            agg.count += 1
+            agg.start = min(session.day, agg.start)
+            agg.end = session.day
+    return list(aggs.values())

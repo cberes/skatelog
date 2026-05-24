@@ -153,11 +153,19 @@ def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter 
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
     table.add_column("Count", justify="right")
+    table.add_column("Last trained", justify="right")
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
-        counts = query.find_discipline_counts(db, start, end)
-    for d in sorted(counts.keys()):
-        table.add_row(str(d), str(counts[d]))
+        aggs = query.find_discipline_counts(db, start, end)
+    for row in sorted(aggs, key=lambda it: it.key):
+        match row.days_since:
+            case None:
+                last_trained = "Never"
+            case 1:
+                last_trained = "1 day  ago"
+            case it:
+                last_trained = f"{it} days ago"
+        table.add_row(row.key, str(row.count), last_trained)
     console.print(table)
 
 @app.command("list-locations")
