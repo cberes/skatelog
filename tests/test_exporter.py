@@ -6,7 +6,6 @@ from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine
 from skatelog.exporter import export_csv
 from skatelog.models import Session, Discipline
-from tempfile import gettempdir
 
 FIXTURE_CSV_EMPTY = Path(__file__).parent / "fixtures" / "export_empty.csv"
 FIXTURE_CSV_NON_EMPTY = Path(__file__).parent / "fixtures" / "export_expected.csv"
@@ -19,13 +18,13 @@ def db() -> Iterator[DBSession]:
         yield session
     SQLModel.metadata.drop_all(engine)
 
-def test_export_csv_with_empty_db(db: DBSession) -> None:
-    csv_path = Path(gettempdir()) / "empty.csv"
+def test_export_csv_with_empty_db(db: DBSession, tmp_path: Path) -> None:
+    csv_path = tmp_path / "empty.csv"
     exported = export_csv(csv_path, db)
     assert exported == 0
     assert list(csv_path.open()) == list(FIXTURE_CSV_EMPTY.open())
 
-def test_export_csv_with_sessions(db: DBSession) -> None:
+def test_export_csv_with_sessions(db: DBSession, tmp_path: Path) -> None:
     day1, day2, day3, day4 = (date(2026, 1, i + 1) for i in range(4))
     sessions = [
         _session_skatepark(day1),
@@ -35,7 +34,7 @@ def test_export_csv_with_sessions(db: DBSession) -> None:
     ]
     db.add_all(sessions)
     db.commit()
-    csv_path = Path(gettempdir()) / "sessions.csv"
+    csv_path = tmp_path / "sessions.csv"
     exported = export_csv(csv_path, db)
     assert exported == len(sessions)
     assert list(csv_path.open()) == list(FIXTURE_CSV_NON_EMPTY.open())
