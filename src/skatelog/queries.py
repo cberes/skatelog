@@ -28,19 +28,19 @@ class SessionAggregate:
     def from_tuple(cls, t: tuple[Any, int, date, date]) -> SessionAggregate:
         return SessionAggregate(str(t[0]), t[1], t[2], t[3])
 
-def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> list[SessionAggregate]:
+def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> Iterator[SessionAggregate]:
     statement = select(column, func.count(col(Session.day)), func.min(col(Session.day)), func.max(col(Session.day))) \
         .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max)) \
         .group_by(column)
-    return [SessionAggregate.from_tuple(it) for it in db.exec(statement)]
+    return (SessionAggregate.from_tuple(it) for it in db.exec(statement))
 
-def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
+def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.where, start, end)
 
-def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
+def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.shoe, start, end)
 
-def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
+def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.board, start, end)
 
 def find_locations(db: DBSession, start: date | None = None) -> set[str]:

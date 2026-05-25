@@ -23,7 +23,8 @@ _DISCIPLINE_COLUMNS: list[tuple[Discipline, str]] = [
     (Discipline.VERT, "Vert"),
 ]
 
-def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> None:
+def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> int:
+    count = 0
     discipline_names = [it[1] for it in _DISCIPLINE_COLUMNS]
     field_names = ["Date", *discipline_names, "Where", "Shoe", "Deck", "Notes"]
     with csv_path.open(mode="w", newline="") as csv_file:
@@ -31,6 +32,8 @@ def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
+            count += 1
+    return count
 
 def _to_row(session: Session) -> CsvRow:
     disciplines = session.disciplines
@@ -47,6 +50,5 @@ def _to_row(session: Session) -> CsvRow:
 def export_csv(csv_path: Path, db: DBSession) -> int:
     statement = select(Session).order_by(col(Session.day))
     sessions = db.exec(statement)
-    rows = [_to_row(s) for s in sessions]
-    _write_rows(csv_path, rows)
-    return len(rows)
+    rows = (_to_row(s) for s in sessions)
+    return _write_rows(csv_path, rows)
