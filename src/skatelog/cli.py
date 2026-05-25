@@ -1,16 +1,13 @@
-from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from sqlalchemy import func
 from sqlmodel import Session as DBSession
-from sqlmodel import select
 from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
 from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
-from skatelog.models import Discipline, Session
+from skatelog.models import Session
 import skatelog.queries as query
 import typer
 from typing import Annotated

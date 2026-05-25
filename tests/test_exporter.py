@@ -5,7 +5,7 @@ import pytest
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine
 from skatelog.exporter import export_csv
-from skatelog.models import Session, Discipline
+from skatelog.models import Session
 
 FIXTURE_CSV_EMPTY = Path(__file__).parent / "fixtures" / "export_empty.csv"
 FIXTURE_CSV_NON_EMPTY = Path(__file__).parent / "fixtures" / "export_expected.csv"

@@ -1,8 +1,6 @@
-from collections.abc import Iterator
 from datetime import date
 import pytest
 from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
-from skatelog.models import Discipline
 
 def test_date_range_returns_min_max_as_default() -> None:
     start, end = date_range(None, None)

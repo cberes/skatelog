@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from datetime import date
 import pytest
 from sqlmodel import Session as DBSession
-from sqlmodel import SQLModel, create_engine, select
+from sqlmodel import SQLModel, create_engine
 from skatelog.models import Session, Discipline
 import skatelog.queries as q
 

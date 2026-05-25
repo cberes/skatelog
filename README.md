@@ -45,7 +45,7 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 
 - Run pyright: `uv run pyright`
 - Run tests: `uv run py.test`
-- Run ruff: TODO I haven't configured this yet
+- Run ruff: `uv run ruff check .`
 
 ### Guides
 

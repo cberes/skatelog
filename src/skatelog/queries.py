@@ -4,7 +4,6 @@ from datetime import date
 from sqlalchemy import func
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
-from skatelog.db import get_engine
 from skatelog.models import Discipline, Session
 from typing import Any
 
@@ -29,9 +28,11 @@ class SessionAggregate:
         return SessionAggregate(str(t[0]), t[1], t[2], t[3])
 
 def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> Iterator[SessionAggregate]:
-    statement = select(column, func.count(col(Session.day)), func.min(col(Session.day)), func.max(col(Session.day))) \
-        .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max)) \
+    statement = (
+        select(column, func.count(col(Session.day)), func.min(col(Session.day)), func.max(col(Session.day)))
+        .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max)) # noqa: E711
         .group_by(column)
+    )
     return (SessionAggregate.from_tuple(it) for it in db.exec(statement))
 
 def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
@@ -59,10 +60,12 @@ def _delete_by_day(db: DBSession, day: date) -> None:
         db.flush()
 
 def find_most_recent_session(db: DBSession) -> Session | None:
-    statement = select(Session) \
-        .where(Session.where != None, Session.shoe != None, Session.board != None) \
-        .order_by(col(Session.day).desc()) \
-        .limit(1)
+    statement = (
+            select(Session)
+                .where(Session.where != None, Session.shoe != None, Session.board != None) # noqa: E711
+                .order_by(col(Session.day).desc())
+                .limit(1)
+    )
     return db.exec(statement).first()
 
 def create_session(db: DBSession, session: Session) -> None:

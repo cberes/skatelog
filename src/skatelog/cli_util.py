@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable, Iterable
+from typing import Iterable
 
 @dataclass
 class OptionResult:
