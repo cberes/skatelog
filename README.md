@@ -1,6 +1,13 @@
 # skatelog
 
-A CLI for tracking skateboarding sessions.
+A CLI for tracking skateboarding sessions
+
+## Features
+
+- [Typer](https://typer.tiangolo.com/) CLI
+- Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
+- Stores data in a [SQLite](https://sqlite.org) database
+- Imports from and exports to CSV files
 
 ## Background
 
@@ -16,13 +23,6 @@ I decided to work on this project with the goal of re-learning Python.
 In an effort to actually _learn_ Python I'm writing everything by hand.
 Also, I've become interested in [tmux](https://github.com/tmux/tmux/)
 and [neovim](https://neovim.io/), so I'm using those tools as well.
-
-## Features
-
-- [Typer](https://typer.tiangolo.com/) CLI
-- Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
-- Stores data in a [SQLite](https://sqlite.org) database
-- Imports from and exports to CSV files
 
 ## Dependencies
 
@@ -46,3 +46,19 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - Run pyright: `uv run pyright`
 - Run tests: `uv run py.test`
 - Run ruff: TODO I haven't configured this yet
+
+### Guides
+
+#### Adding a discipline
+
+I included the disciplines that are relevant to my skateboarding.
+If you'd like to track other activities, you can!
+For example, you may want to track specific tricks like noseslide, crooked grind, etc.
+It requires some code changes, but it's reasonably simple.
+
+1. If you've recorded any sessions, use the `export` command to export your data
+2. Delete your SQLite database (delete the file at `$HOME/.skatelog/skatelog.db`)
+3. Add an entry to the `Discipline` enum in src/skatelog/models.py
+4. Add your new Discipline to `_DISCIPLINE_COLUMNS` in src/skatelog/exporter.py
+5. Add your new Discipline to `_DISCIPLINE_COLUMNS` in src/skatelog/importer.py
+6. Run the `import` command to restore your data from step 1
