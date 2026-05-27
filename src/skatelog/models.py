@@ -127,7 +127,7 @@ class Session(SQLModel, table=True):
         pattern = re.compile((
                 r"(?:^|,)\s*"
                 r"(?P<count>\d*)\s*"
-                r"(?P<stance>" f"{_STANCE_REGEX}" r")?\s*"
+                r"(?P<stance>(?:" f"{_STANCE_REGEX}" r")(?=\s+))?\s*"
                 r"(?P<name>[^,()]+?)\s*"
                 r"(?P<surface>(?:\s+in\s+|\s+on\s+)[^,()]+)?\s*"
                 r"(?P<comment>\([^()]+\))?\s*" # TODO: hmm I want to allow commas and nested parentheses, but I don't want this capturing too much

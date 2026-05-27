@@ -7,6 +7,10 @@ from skatelog.models import Session, Stance, Trick
     (" \t\n", []),
     ("noseslide", [Trick("noseslide")]),
     ("blunt nose grab", [Trick("blunt nose grab")]),
+    ("ollie", [Trick("ollie")]),
+    ("fakie ollie", [Trick("ollie", stance=Stance.FAKIE)]),
+    ("nollie", [Trick("nollie")]), # TODO: what is the stance for a nollie? no one says "nollie nollie"
+    ("2 nollies", [Trick("nollie", count=2)]),
     ("nol bigspin", [Trick("bigspin", stance=Stance.NOLLIE)]),
     ("sw boardslide", [Trick("boardslide", stance=Stance.SWITCH)]),
     ("fakey boardslide", [Trick("boardslide", stance=Stance.FAKIE)]),
