@@ -14,8 +14,8 @@ _TRICK_PATTERN = re.compile((
         r"(?P<count>\d*)\s*"
         r"(?P<stance>(?:" f"{_STANCE_REGEX}" r")(?=\s+))?\s*"
         r"(?P<name>[^,()]+?)\s*"
-        r"(?P<surface>(?:\s+(?:at|in|on|over)\s+)[^,()]+)?\s*"
         r"(?P<comment>\([^()]+\))?\s*" # TODO: hmm I want to allow commas and nested parentheses, but I don't want this capturing too much
+        r"(?P<surface>(?:\s+(?:at|in|on|over)\s+)[^,()]+)?\s*"
         r"(?=$|,)"
 ), re.IGNORECASE)
 
