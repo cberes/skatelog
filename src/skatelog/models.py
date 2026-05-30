@@ -21,7 +21,7 @@ _TRICK_PATTERN = re.compile((
 
 _TRICK_COMMENT_PATTERN = re.compile(r"(?:^|,)\s*(\d+)\s+(" f"{_STANCE_REGEX}" r")\s*(?=$|,)", re.IGNORECASE)
 
-_ON_THE_PATTERN = re.compile(r"^\s*(on|in|over)\s+((a|the)\s+)?", re.IGNORECASE)
+_ON_THE_PATTERN = re.compile(r"^\s*(at|in|on|over)\s+((a|the)\s+)?", re.IGNORECASE)
 
 class Stance(StrEnum):
     REGULAR = auto()
