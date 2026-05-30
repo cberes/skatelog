@@ -9,6 +9,20 @@ from typing import Self
 # TODO: ideally I'd want this to be more flexible, but IDK how to handle that without listing every possible abbreviation
 _STANCE_REGEX = "regular|switch|fakie|nollie|reg|regs|sw|fakey|nol"
 
+_TRICK_PATTERN = re.compile((
+        r"(?:^|,)\s*"
+        r"(?P<count>\d*)\s*"
+        r"(?P<stance>(?:" f"{_STANCE_REGEX}" r")(?=\s+))?\s*"
+        r"(?P<name>[^,()]+?)\s*"
+        r"(?P<surface>(?:\s+in\s+|\s+on\s+)[^,()]+)?\s*"
+        r"(?P<comment>\([^()]+\))?\s*" # TODO: hmm I want to allow commas and nested parentheses, but I don't want this capturing too much
+        r"(?=$|,)"
+), re.IGNORECASE)
+
+_TRICK_COMMENT_PATTERN = re.compile(r"(?:^|,)\s*(\d+)\s+(" f"{_STANCE_REGEX}" r")\s*(?=$|,)", re.IGNORECASE)
+
+_ON_THE_PATTERN = re.compile(r"^\s*(on|in)\s+((a|the)\s+)?", re.IGNORECASE)
+
 class Stance(StrEnum):
     REGULAR = auto()
     SWITCH = auto()
@@ -25,13 +39,59 @@ class Stance(StrEnum):
                 return member
         return None
 
-
 @dataclass
 class Trick:
     name: str
     stance: Stance = Stance.REGULAR
     surface: str | None = None
     count: int = 1
+
+    def __post_init__(self) -> None:
+        """Handles special cases for Trick instances."""
+        match self.name.lower():
+            case "flip":
+                self.name = "kickflip"
+            case "nollie":
+                self.stance = Stance.NOLLIE
+
+    @classmethod
+    def _singularize(cls, s: str) -> str:
+        return s[:-1] if s[-1].lower() == "s" else s
+
+    @classmethod
+    def _clean_surface(cls, s: str) -> str:
+        return _ON_THE_PATTERN.sub("", s)
+
+    @classmethod
+    def _parse_trick_comment(cls, comment: str) -> Iterator[tuple[int, Stance]]:
+        matches = _TRICK_COMMENT_PATTERN.finditer(comment.strip("() "))
+        for match in matches:
+            groups = match.groups()
+            yield (int(groups[0]), Stance(groups[1]))
+
+    @classmethod
+    def parse(cls, value: str) -> Iterator[Trick]:
+        matches = _TRICK_PATTERN.finditer(value)
+        for match in matches:
+            groups = {k: v for k, v in match.groupdict().items() if v}
+            kwargs = {}
+            name = cls._singularize(match.group("name"))
+            parsed = 0
+            if "count" in groups:
+                kwargs["count"] = int(groups["count"])
+            if "stance" in groups:
+                kwargs["stance"] = Stance(groups["stance"])
+            if "surface" in groups:
+                kwargs["surface"] = cls._clean_surface(groups["surface"])
+            if "comment" in groups:
+                for count, stance in cls._parse_trick_comment(groups["comment"]):
+                    kwargs["count"] = count
+                    kwargs["stance"] = stance
+                    yield Trick(name, **kwargs)
+                    parsed += 1
+            if parsed == 0:
+                yield Trick(name, **kwargs)
+
 
 class Discipline(StrEnum):
     A_FRAME = auto()
@@ -105,51 +165,9 @@ class Session(SQLModel, table=True):
     def is_good(self) -> bool:
         return self.skated or bool(self.notes)
 
-    # TODO: this is stupid: a regex is probably overkill, and singular words can end with s
-    def _singularize(self, s: str) -> str:
-        return re.sub("s$", "", s)
-
-    def _clean_surface(self, s: str) -> str:
-        step1 = re.sub(r"^\s*(on|in)\s+", "", s)
-        return re.sub(r"^\s*(a|the)\s+", "", step1)
-
-    def _parse_trick_comment(self, comment: str) -> Iterator[tuple[int, Stance]]:
-        pattern = re.compile(r"(?:^|,)\s*(\d+)\s+(" f"{_STANCE_REGEX}" r")\s*(?=$|,)", re.IGNORECASE)
-        matches = pattern.finditer(comment.strip("() "))
-        for match in matches:
-            groups = match.groups()
-            yield (int(groups[0]), Stance(groups[1]))
-
     @property
     def tricks(self) -> Iterator[Trick]:
         if not self.skated or self.notes is None or self.notes.isspace():
             return
-        pattern = re.compile((
-                r"(?:^|,)\s*"
-                r"(?P<count>\d*)\s*"
-                r"(?P<stance>(?:" f"{_STANCE_REGEX}" r")(?=\s+))?\s*"
-                r"(?P<name>[^,()]+?)\s*"
-                r"(?P<surface>(?:\s+in\s+|\s+on\s+)[^,()]+)?\s*"
-                r"(?P<comment>\([^()]+\))?\s*" # TODO: hmm I want to allow commas and nested parentheses, but I don't want this capturing too much
-                r"(?=$|,)"
-        ), re.IGNORECASE)
-        matches = pattern.finditer(self.notes)
-        for match in matches:
-            groups = {k: v for k, v in match.groupdict().items() if v}
-            kwargs = {}
-            name = self._singularize(match.group("name"))
-            parsed = 0
-            if "count" in groups:
-                kwargs["count"] = int(groups["count"])
-            if "stance" in groups:
-                kwargs["stance"] = Stance(groups["stance"])
-            if "surface" in groups:
-                kwargs["surface"] = self._clean_surface(groups["surface"])
-            if "comment" in groups:
-                for count, stance in self._parse_trick_comment(groups["comment"]):
-                    kwargs["count"] = count
-                    kwargs["stance"] = stance
-                    yield Trick(name, **kwargs)
-                    parsed += 1
-            if parsed == 0:
-                yield Trick(name, **kwargs)
+        for t in Trick.parse(self.notes):
+            yield t
