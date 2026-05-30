@@ -2,8 +2,8 @@ from collections.abc import Iterator
 from datetime import date
 import pytest
 from sqlmodel import Session as DBSession
-from sqlmodel import SQLModel, create_engine
-from skatelog.models import Session, Discipline
+from sqlmodel import SQLModel, create_engine, select
+from skatelog.models import Discipline, Session, Trick
 import skatelog.queries as q
 
 @pytest.fixture
@@ -36,6 +36,17 @@ def test_create_session_persists_new_session(db: DBSession) -> None:
     assert found.day == day
     assert found.disciplines == {Discipline.A_FRAME}
 
+def test_create_session_persists_new_tricks(db: DBSession) -> None:
+    day = date(2026, 1, 1)
+    session = _session_skatepark(day)
+    tricks = [Trick(day=session.day, name="kickflip")]
+    session.tricks = tricks.copy()
+    q.create_session(db, session)
+    found = db.get(Session, day)
+    assert found is session
+    found_tricks = db.exec(select(Trick).where(Trick.day == session.day)).all()
+    assert found_tricks == tricks
+
 def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
     session1 = _session_skatepark(day)
@@ -47,6 +58,21 @@ def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
     assert found is not None
     assert found.day == day
     assert found.disciplines == {Discipline.BOWL}
+
+def test_create_session_deletes_duplicate_tricks(db: DBSession) -> None:
+    day = date(2026, 1, 1)
+    session1 = _session_skatepark(day)
+    session1.tricks = [Trick(day=session1.day, name="kickflip")]
+    db.add(session1)
+    db.commit()
+    session2 = _session_tennis_court(day)
+    tricks = [Trick(day=day, name="heelflip")]
+    session2.tricks = tricks.copy()
+    q.create_session(db, session2)
+    found = db.get(Session, day)
+    assert found is session2
+    found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
+    assert found_tricks == tricks
 
 def test_delete_session(db: DBSession) -> None:
     day = date(2026, 1, 1)

@@ -1,9 +1,8 @@
 from collections.abc import Iterator
-from dataclasses import dataclass
 from datetime import date
 from enum import auto, StrEnum
 import re
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from typing import Self
 
 # TODO: ideally I'd want this to be more flexible, but IDK how to handle that without listing every possible abbreviation
@@ -39,14 +38,16 @@ class Stance(StrEnum):
                 return member
         return None
 
-@dataclass
-class Trick:
-    name: str
-    stance: Stance = Stance.REGULAR
+class Trick(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    day: date = Field(foreign_key="session.day")
+    name: str = Field(index=True)
+    stance: Stance = Field(default=Stance.REGULAR, index=True)
     surface: str | None = None
     count: int = 1
+    session: Session = Relationship(back_populates="tricks")
 
-    def __post_init__(self) -> None:
+    def _special_cases(self) -> None:
         """Handles special cases for Trick instances."""
         match self.name.lower():
             case "flip":
@@ -70,7 +71,7 @@ class Trick:
             yield (int(groups[0]), Stance(groups[1]))
 
     @classmethod
-    def parse(cls, value: str) -> Iterator[Trick]:
+    def parse(cls, day: date, value: str) -> Iterator[Trick]:
         matches = _TRICK_PATTERN.finditer(value)
         for match in matches:
             groups = {k: v for k, v in match.groupdict().items() if v}
@@ -87,10 +88,14 @@ class Trick:
                 for count, stance in cls._parse_trick_comment(groups["comment"]):
                     kwargs["count"] = count
                     kwargs["stance"] = stance
-                    yield Trick(name, **kwargs)
+                    t = Trick(day=day, name=name, **kwargs)
+                    t._special_cases()
+                    yield t
                     parsed += 1
             if parsed == 0:
-                yield Trick(name, **kwargs)
+                t = Trick(day=day, name=name, **kwargs)
+                t._special_cases()
+                yield t
 
 
 class Discipline(StrEnum):
@@ -138,6 +143,7 @@ class Session(SQLModel, table=True):
     shoe: str | None = None
     board: str | None = None
     notes: str | None = None
+    tricks: list[Trick] = Relationship(back_populates="session", cascade_delete=True)
 
     @property
     def disciplines(self) -> set[Discipline]:
@@ -165,9 +171,7 @@ class Session(SQLModel, table=True):
     def is_good(self) -> bool:
         return self.skated or bool(self.notes)
 
-    @property
-    def tricks(self) -> Iterator[Trick]:
+    def parse_tricks(self) -> None:
         if not self.skated or self.notes is None or self.notes.isspace():
             return
-        for t in Trick.parse(self.notes):
-            yield t
+        self.tricks.extend(Trick.parse(self.day, self.notes))

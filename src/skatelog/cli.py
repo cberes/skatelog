@@ -108,8 +108,10 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
         shoe=shoe_result.found,
         board=board_result.found,
         notes=_none_if_dash(notes),
+        tricks=[],
         **disc_result.found,
     )
+    session.parse_tricks()
 
     if not session.is_good:
         console.print("[red]Not saving incomplete session[/red]")

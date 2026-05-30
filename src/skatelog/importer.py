@@ -50,10 +50,12 @@ def parse_rows(csv_path: Path) -> Iterator[Session]:
                 shoe=_to_str(row, "shoe"),
                 board=_to_str(row, "deck"),
                 notes=_to_str(row, "notes"),
+                tricks=[],
                 **discipline_flags,
             )
 
             if session.is_good:
+                session.parse_tricks()
                 yield session
 
 

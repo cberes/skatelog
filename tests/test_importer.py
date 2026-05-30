@@ -1,11 +1,11 @@
 from collections.abc import Iterator
+from datetime import date
 from pathlib import Path
-
 import pytest
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine, select
 from skatelog.importer import import_csv, parse_rows
-from skatelog.models import Session, Discipline
+from skatelog.models import Discipline, Session, Stance, Trick
 
 FIXTURE = Path(__file__).parent / "fixtures" / "journal_sample.csv"
 
@@ -41,6 +41,10 @@ def test_parse_real_session_normalizes_fields() -> None:
     assert s.notes == "blunt nose grabs (3 regular, 3 switch)"
     assert s.skated is True
 
+def test_parse_real_session_parses_tricks() -> None:
+    s = _by_date(FIXTURE)["2026-01-04"]
+    assert sorted(s.tricks, key=lambda it: it.stance) == [Trick(day=s.day, name="blunt nose grab", stance=stance, count=3) for stance in (Stance.REGULAR, Stance.SWITCH)]
+
 def test_parse_empty_notes_become_none() -> None:
     s = _by_date(FIXTURE)["2026-04-23"]
     assert s.notes is None
@@ -51,3 +55,11 @@ def test_import_csv_is_idempotent(db: DBSession) -> None:
     assert n1 == n2 == 4
     all_sessions = db.exec(select(Session)).all()
     assert len(all_sessions) == n1
+
+def test_import_csv_saves_tricks(db: DBSession) -> None:
+    import_csv(FIXTURE, db)
+    day = date(2026, 1, 4)
+    tricks = db.exec(select(Trick).where(Trick.day == day)).all()
+    for t in tricks:
+        t.id = None
+    assert sorted(tricks, key=lambda it: it.stance) == [Trick(day=day, name="blunt nose grab", stance=stance, count=3) for stance in (Stance.REGULAR, Stance.SWITCH)]
