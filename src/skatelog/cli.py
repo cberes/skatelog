@@ -10,7 +10,7 @@ from skatelog.importer import import_csv
 from skatelog.models import Session, Trick
 import skatelog.queries as query
 import typer
-from typing import Annotated
+from typing import Annotated, Iterable
 
 app = typer.Typer(help="Skateboarding session log.")
 console = Console()
@@ -39,15 +39,20 @@ def _session_table(session: Session) -> Table:
     table.add_row("Notes", session.notes or "-")
     return table
 
-def _tricks_table(session: Session) -> Table:
+def _tricks_table(tricks: Iterable[Trick], include_day: bool = False) -> Table:
     table = Table(title="Tricks")
+    if include_day:
+        table.add_column("Day", justify="right", style="cyan")
     table.add_column("Count", justify="right")
     table.add_column("Stance")
     table.add_column("Name")
     table.add_column("Surface")
-    table.add_column("ID", justify="right", style="cyan")
-    for t in session.tricks:
-        table.add_row(str(t.count), str(t.stance), t.name, t.surface or "-", str(t.id))
+    table.add_column("ID", justify="right", style="green")
+    for t in tricks:
+        cols = [str(t.count), str(t.stance), t.name, t.surface or "-", str(t.id)]
+        if include_day:
+            cols.insert(0, t.day.isoformat())
+        table.add_row(*cols)
     return table
 
 @app.command("show")
@@ -61,7 +66,7 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
             raise typer.Exit(code=1)
         console.print(_session_table(session))
         if session.tricks:
-            console.print(_tricks_table(session))
+            console.print(_tricks_table(session.tricks))
 
 def _find_recent_locations() -> set[str]:
     with DBSession(get_engine()) as db:
@@ -167,8 +172,17 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         for session in query.find_by_date_range(db, start, end):
-            table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", str(session.trick_count), session.notes or "-")
+            table.add_row(session.day.isoformat(), session.where or "-", session.shoe or "-", session.board or "-", str(session.trick_count), session.notes or "-")
     console.print(table)
+
+@app.command("list-tricks")
+def list_tricks_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+             year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+    """List tricks."""
+    start, end = date_range(month, year)
+    with DBSession(get_engine()) as db:
+        tricks = query.find_tricks_by_date_range(db, start, end)
+        console.print(_tricks_table(tricks, include_day=True))
 
 @app.command("list-disciplines")
 def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,

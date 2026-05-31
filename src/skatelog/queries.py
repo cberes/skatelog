@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import func
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
-from skatelog.models import Discipline, Session
+from skatelog.models import Discipline, Session, Trick
 from typing import Any
 
 def find_session(db: DBSession, target: date) -> Session | None:
@@ -83,6 +83,13 @@ def delete_session(db: DBSession, target: date) -> bool:
 def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Session]:
     statement = select(Session).where(Session.day >= start, Session.day < end) \
         .order_by(col(Session.day))
+    sessions = db.exec(statement)
+    for session in sessions:
+        yield session
+
+def find_tricks_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Trick]:
+    statement = select(Trick).where(Trick.day >= start, Trick.day < end) \
+        .order_by(col(Trick.day))
     sessions = db.exec(statement)
     for session in sessions:
         yield session

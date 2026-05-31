@@ -113,6 +113,14 @@ def test_find_by_date_range(db: DBSession) -> None:
     found = q.find_by_date_range(db, days[1], days[9])
     assert list(found) == sessions[1:9]
 
+def test_find_tricks_by_date_range(db: DBSession) -> None:
+    days = [date(2026, 1, i + 1) for i in range(10)]
+    tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
+    db.add_all(tricks)
+    db.commit()
+    found = q.find_tricks_by_date_range(db, days[1], days[9])
+    assert list(found) == tricks[1:9]
+
 class TestCountByDateRange:
     @pytest.fixture(autouse=True)
     def setup_db(self, db: DBSession) -> None:
