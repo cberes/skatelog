@@ -50,6 +50,10 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - Run tests: `uv run py.test`
 - Run ruff: `uv run ruff check .`
 
+_OR_
+
+- Run all of the above: `make test`
+
 ### Guides
 
 #### Adding a discipline

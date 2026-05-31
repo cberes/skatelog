@@ -90,9 +90,9 @@ def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Sessio
 def find_tricks_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Trick]:
     statement = select(Trick).where(Trick.day >= start, Trick.day < end) \
         .order_by(col(Trick.day))
-    sessions = db.exec(statement)
-    for session in sessions:
-        yield session
+    tricks = db.exec(statement)
+    for trick in tricks:
+        yield trick
 
 def find_discipline_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
     aggs = {d: SessionAggregate(str(d), 0, date.max, date.max) for d in Discipline}
