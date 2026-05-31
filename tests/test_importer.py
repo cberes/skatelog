@@ -44,10 +44,12 @@ def test_parse_real_session_normalizes_fields() -> None:
 def test_parse_real_session_parses_tricks() -> None:
     s = _by_date(FIXTURE)["2026-01-04"]
     assert sorted(s.tricks, key=lambda it: it.stance) == [Trick(day=s.day, name="blunt nose grab", stance=stance, count=3) for stance in (Stance.REGULAR, Stance.SWITCH)]
+    assert s.trick_count == 6
 
 def test_parse_empty_notes_become_none() -> None:
     s = _by_date(FIXTURE)["2026-04-23"]
     assert s.notes is None
+    assert s.trick_count == 0
 
 def test_import_csv_is_idempotent(db: DBSession) -> None:
     n1 = import_csv(FIXTURE, db)

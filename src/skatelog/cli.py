@@ -137,12 +137,13 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
     table.add_column("Where", style="green")
     table.add_column("Shoe")
     table.add_column("Board")
+    table.add_column("Tricks", justify="right")
     table.add_column("Notes")
 
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         for session in query.find_by_date_range(db, start, end):
-            table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", session.notes or "-")
+            table.add_row(str(session.day), session.where or "-", session.shoe or "-", session.board or "-", str(session.trick_count), session.notes or "-")
     console.print(table)
 
 @app.command("list-disciplines")

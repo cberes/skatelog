@@ -171,6 +171,10 @@ class Session(SQLModel, table=True):
     def is_good(self) -> bool:
         return self.skated or bool(self.notes)
 
+    @property
+    def trick_count(self) -> int:
+        return sum(t.count for t in self.tricks) if self.tricks else 0
+
     def parse_tricks(self) -> None:
         if not self.skated or self.notes is None or self.notes.isspace():
             return
