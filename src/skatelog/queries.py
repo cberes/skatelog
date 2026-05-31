@@ -53,11 +53,13 @@ def find_shoes(db: DBSession, start: date | None = None) -> set[str]:
 def find_boards(db: DBSession, start: date | None = None) -> set[str]:
     return set(it.key for it in find_board_counts(db, start))
 
-def _delete_by_day(db: DBSession, day: date) -> None:
+def _delete_by_day(db: DBSession, day: date) -> bool:
     existing = db.get(Session, day)
-    if existing is not None:
+    exists = existing is not None
+    if exists:
         db.delete(existing)
         db.flush()
+    return exists
 
 def find_most_recent_session(db: DBSession) -> Session | None:
     statement = (
@@ -73,9 +75,10 @@ def create_session(db: DBSession, session: Session) -> None:
     db.add(session)
     db.commit()
 
-def delete_session(db: DBSession, target: date) -> None:
-    _delete_by_day(db, target)
+def delete_session(db: DBSession, target: date) -> bool:
+    deleted = _delete_by_day(db, target)
     db.commit()
+    return deleted
 
 def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Session]:
     statement = select(Session).where(Session.day >= start, Session.day < end) \

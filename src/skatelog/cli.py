@@ -7,7 +7,7 @@ from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
 from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
-from skatelog.models import Session
+from skatelog.models import Session, Trick
 import skatelog.queries as query
 import typer
 from typing import Annotated
@@ -139,7 +139,18 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     target = date.fromisoformat(day)
     with DBSession(get_engine()) as db:
-        query.delete_session(db, target)
+        if not query.delete_session(db, target):
+            console.print(f"[red]No session for {day}[/red]")
+
+@app.command("delete-trick")
+def delete_trick_cmd(id: Annotated[int, typer.Argument(help="Trick ID")]) -> None:
+    with DBSession(get_engine()) as db:
+        existing = db.get(Trick, id)
+        if existing is not None:
+            db.delete(existing)
+            db.commit()
+        else:
+            console.print(f"[red]No trick with ID {id}[/red]")
 
 @app.command("list")
 def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,

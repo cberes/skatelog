@@ -80,8 +80,11 @@ def test_delete_session(db: DBSession) -> None:
     db.add(session)
     db.commit()
     assert db.get(Session, day) is not None
-    q.delete_session(db, day)
+    assert q.delete_session(db, day)
     assert db.get(Session, day) is None
+
+def test_delete_session_returns_false_when_not_found(db: DBSession) -> None:
+    assert not q.delete_session(db, date(2026, 1, 1))
 
 def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
     day1, day2, day3 = (date(2026, 1, i + 1) for i in range(3))
