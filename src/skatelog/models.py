@@ -176,6 +176,9 @@ class Session(SQLModel, table=True):
         return sum(t.count for t in self.tricks) if self.tricks else 0
 
     def parse_tricks(self) -> None:
-        if not self.skated or self.notes is None or self.notes.isspace():
+        if not self.skated or not self.notes:
             return
-        self.tricks.extend(Trick.parse(self.day, self.notes))
+        tricks_str = self.notes.partition(";")[2] if ";" in self.notes else self.notes
+        if not tricks_str or tricks_str.isspace():
+            return
+        self.tricks.extend(Trick.parse(self.day, tricks_str))

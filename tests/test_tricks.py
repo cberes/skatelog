@@ -8,6 +8,8 @@ DAY = date(2026, 1, 1)
     ("", []),
     (" \t\n", []),
     ("noseslide", [Trick(day=DAY, name="noseslide")]),
+    ("new trucks;", []),
+    ("new trucks; noseslide", [Trick(day=DAY, name="noseslide")]),
     ("blunt nose grab", [Trick(day=DAY, name="blunt nose grab")]),
     ("ollie", [Trick(day=DAY, name="ollie")]),
     ("fakie ollie", [Trick(day=DAY, name="ollie", stance=Stance.FAKIE)]),
