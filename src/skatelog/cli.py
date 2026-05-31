@@ -39,6 +39,17 @@ def _session_table(session: Session) -> Table:
     table.add_row("Notes", session.notes or "-")
     return table
 
+def _tricks_table(session: Session) -> Table:
+    table = Table(title="Tricks")
+    table.add_column("Count", justify="right")
+    table.add_column("Stance")
+    table.add_column("Name")
+    table.add_column("Surface")
+    table.add_column("ID", justify="right", style="cyan")
+    for t in session.tricks:
+        table.add_row(str(t.count), str(t.stance), t.name, t.surface or "-", str(t.id))
+    return table
+
 @app.command("show")
 def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
     """Show a day's session."""
@@ -49,6 +60,8 @@ def show_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> 
             console.print(f"[yellow]No session logged for {target}[/yellow]")
             raise typer.Exit(code=1)
         console.print(_session_table(session))
+        if session.tricks:
+            console.print(_tricks_table(session))
 
 def _find_recent_locations() -> set[str]:
     with DBSession(get_engine()) as db:
