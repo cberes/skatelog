@@ -142,6 +142,7 @@ def add_cmd(day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-
 
 @app.command("delete")
 def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
+    """Delete session by day."""
     target = date.fromisoformat(day)
     with DBSession(get_engine()) as db:
         if not query.delete_session(db, target):
@@ -149,6 +150,7 @@ def delete_cmd(day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -
 
 @app.command("delete-trick")
 def delete_trick_cmd(id: Annotated[int, typer.Argument(help="Trick ID")]) -> None:
+    """Delete trick by ID."""
     with DBSession(get_engine()) as db:
         existing = db.get(Trick, id)
         if existing is not None:
