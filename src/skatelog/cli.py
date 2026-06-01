@@ -3,7 +3,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from sqlmodel import Session as DBSession
-from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
+from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks
 from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
@@ -179,11 +179,13 @@ def list_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")
 
 @app.command("list-tricks")
 def list_tricks_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-             year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+                    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+                    new: Annotated[bool, typer.Option(help="List new tricks only")] = False) -> None:
     """List tricks."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         tricks = query.find_tricks_by_date_range(db, start, end)
+        tricks = new_tricks(tricks) if new else tricks
         console.print(_tricks_table(tricks, include_day=True))
 
 @app.command("list-disciplines")

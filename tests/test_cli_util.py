@@ -1,6 +1,7 @@
 from datetime import date
 import pytest
-from skatelog.cli_util import find_by_startswith, find_disciplines, date_range
+from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks
+from skatelog.models import Stance, Trick
 
 def test_date_range_returns_min_max_as_default() -> None:
     start, end = date_range(None, None)
@@ -76,3 +77,59 @@ def test_find_disciplines_with_ambiguous_inputs() -> None:
     assert result.ambiguous == ["bo", "f"]
     assert result.unknown == []
 
+def test_new_tricks_when_empty() -> None:
+    assert list(new_tricks([])) == []
+
+def test_new_tricks_ignores_count() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip", count=10),
+        Trick(day=date(2026, 1, 2), name="kickflip", count=100),
+        Trick(day=date(2026, 1, 3), name="kickflip", count=1),
+    ]
+    assert list(new_tricks(tricks)) == tricks[:1]
+
+def test_new_tricks_ignores_id() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip", id=10),
+        Trick(day=date(2026, 1, 2), name="kickflip", id=100),
+        Trick(day=date(2026, 1, 3), name="kickflip", id=1),
+    ]
+    assert list(new_tricks(tricks)) == tricks[:1]
+
+def test_new_tricks_considers_stance() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip", stance=Stance.REGULAR),
+        Trick(day=date(2026, 1, 2), name="kickflip", stance=Stance.SWITCH),
+        Trick(day=date(2026, 1, 3), name="kickflip", stance=Stance.NOLLIE),
+    ]
+    assert list(new_tricks(tricks)) == tricks
+
+def test_new_tricks_considers_surface() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip", surface="A-frame"),
+        Trick(day=date(2026, 1, 2), name="kickflip", surface="hip"),
+        Trick(day=date(2026, 1, 3), name="kickflip", surface="euro gap"),
+    ]
+    assert list(new_tricks(tricks)) == tricks
+
+def test_new_tricks_excludes_surfaceless_trick_when_surface_trick_present() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip", surface="A-frame"),
+        Trick(day=date(2026, 1, 2), name="kickflip"),
+    ]
+    assert list(new_tricks(tricks)) == tricks[:1]
+
+def test_new_tricks_includes_surface_trick_when_surfaceless_trick_present() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip"),
+        Trick(day=date(2026, 1, 2), name="kickflip", surface="A-frame"),
+    ]
+    assert list(new_tricks(tricks)) == tricks
+
+def test_new_tricks_considers_name() -> None:
+    tricks = [
+        Trick(day=date(2026, 1, 1), name="kickflip"),
+        Trick(day=date(2026, 1, 2), name="heelflip"),
+        Trick(day=date(2026, 1, 3), name="ollie"),
+    ]
+    assert list(new_tricks(tricks)) == tricks

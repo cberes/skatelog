@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Iterable
+from skatelog.models import Stance, Trick
+from typing import Iterable, Iterator
 
 @dataclass
 class OptionResult:
@@ -70,3 +71,24 @@ def date_range(month: str | None, year: str | None) -> tuple[date, date]:
         return _year_range(year)
     else:
         return (date.min, date.max)
+
+def new_tricks(tricks: Iterable[Trick]) -> Iterator[Trick]:
+    """Finds only new tricks from the incoming list, which is assumed to be sorted chronlogically."""
+    # keep a list with surface and without
+    # if surface is present, the trick is new if there's not an entry with the same surface
+    # if surface is empty, the trick is new if there's no entry both with and without a surface
+    # abd means "already been done" of course
+    abd: set[tuple[Stance, str, str]] = set()
+    abd_no_surface: set[tuple[Stance, str]] = set()
+    for trick in tricks:
+        trick_key = (trick.stance, trick.name.casefold(), (trick.surface or "").casefold())
+        trick_key_no_surface = trick_key[0:2]
+        if trick.surface:
+            if trick_key not in abd:
+                abd.add(trick_key)
+                abd_no_surface.add(trick_key_no_surface)
+                yield trick
+        elif trick_key_no_surface not in abd_no_surface:
+            abd_no_surface.add(trick_key_no_surface)
+            yield trick
+
