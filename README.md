@@ -43,6 +43,7 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - `uv run skatelog export /path/to/export.csv` exports data to a CSV file
 - `uv run skatelog delete 2026-05-22` deletes the session on the specified date
 - `uv run skatelog delete-trick 100` deletes the trick with the specified ID
+- `uv run skatelog streak` finds streaks of days skated
 
 ## Development
 
