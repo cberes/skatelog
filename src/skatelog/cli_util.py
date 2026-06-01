@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from datetime import date
-from skatelog.models import Stance, Trick
+from datetime import date, timedelta
+from skatelog.models import Session, Stance, Trick
 from typing import Iterable, Iterator
 
 @dataclass
@@ -71,6 +71,26 @@ def date_range(month: str | None, year: str | None) -> tuple[date, date]:
         return _year_range(year)
     else:
         return (date.min, date.max)
+
+def streak(sessions: Iterable[Session]) -> tuple[int, list[tuple[date, int]]]:
+    """Finds streaks of skated days from given sessions."""
+    sorted_sessions = sorted((s for s in sessions if s.skated), key=lambda it: it.day)
+    current_streak = 0
+    best_streak = 0
+    days = []
+    for session in sorted_sessions:
+        if not days:
+            current_streak = 1
+        elif days[-1][0] + timedelta(days=1) == session.day:
+            current_streak += 1
+        else:
+            delta = session.day - days[-1][0]
+            missed_days = (days[-1][0] + timedelta(days=i) for i in range(1, delta.days))
+            days += [(day, 0) for day in missed_days]
+            current_streak = 1
+        days.append((session.day, current_streak))
+        best_streak = max(best_streak, current_streak)
+    return (best_streak, days)
 
 def new_tricks(tricks: Iterable[Trick]) -> Iterator[Trick]:
     """Finds only new tricks from the incoming list, which is assumed to be sorted chronlogically."""

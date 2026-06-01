@@ -3,7 +3,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from sqlmodel import Session as DBSession
-from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks
+from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak
 from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
@@ -257,6 +257,22 @@ def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
     for row in sorted(aggs, key=lambda it: it.count, reverse=True):
         table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
     console.print(table)
+
+@app.command("streak")
+def streak_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+               year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+    """Finds best streak and lists current streak by day."""
+    table = Table(title="Streak")
+    table.add_column("Day", justify="right")
+    table.add_column("Streak", justify="right", style="green")
+    start, end = date_range(month, year)
+    with DBSession(get_engine()) as db:
+        sessions = query.find_by_date_range(db, start, end)
+        best, days = streak(sessions)
+    for day in days:
+        table.add_row(day[0].isoformat(), str(day[1]))
+    console.print(table)
+    console.print(f"[green]Best streak is {best} day{'' if best == 1 else 's'}[/green]")
 
 def main() -> None:
     app()

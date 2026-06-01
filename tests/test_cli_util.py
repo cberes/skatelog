@@ -1,7 +1,7 @@
 from datetime import date
 import pytest
-from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks
-from skatelog.models import Stance, Trick
+from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak
+from skatelog.models import Session, Stance, Trick
 
 def test_date_range_returns_min_max_as_default() -> None:
     start, end = date_range(None, None)
@@ -76,6 +76,64 @@ def test_find_disciplines_with_ambiguous_inputs() -> None:
     assert result.found == {"a_frame": True, "manual": True}
     assert result.ambiguous == ["bo", "f"]
     assert result.unknown == []
+
+def test_streak_when_empty() -> None:
+    assert streak([]) == (0, [])
+
+def test_streak_when_not_skated() -> None:
+    days = (date(2026, 1, i) for i in range(1, 10))
+    sessions = (Session(day=d) for d in days)
+    assert streak(sessions) == (0, [])
+
+def test_streak_when_skated_every_day() -> None:
+    days = [date(2026, 1, i) for i in range(1, 10)]
+    sessions = (Session(day=d, flat=True) for d in days)
+    assert streak(sessions) == (9, [(days[i], i + 1) for i in range(0, len(days))])
+
+def test_streak_sorts_sessions() -> None:
+    days = [date(2026, 1, i) for i in range(1, 10)]
+    sessions = (Session(day=d, flat=True) for d in reversed(days))
+    assert streak(sessions) == (9, [(days[i], i + 1) for i in range(0, len(days))])
+
+def test_streak_detects_breaks() -> None:
+    sessions = [
+        Session(day=date(2026, 1, 1), flat=True),
+        Session(day=date(2026, 1, 2), flat=True),
+        Session(day=date(2026, 1, 3), flat=True),
+        Session(day=date(2026, 1, 6), flat=True),
+    ]
+    expected = [
+        (date(2026, 1, 1), 1),
+        (date(2026, 1, 2), 2),
+        (date(2026, 1, 3), 3),
+        (date(2026, 1, 4), 0),
+        (date(2026, 1, 5), 0),
+        (date(2026, 1, 6), 1),
+    ]
+    assert streak(sessions) == (3, expected)
+
+def test_streak_updates_best_streak() -> None:
+    sessions = [
+        Session(day=date(2026, 1, 1), flat=True),
+        Session(day=date(2026, 1, 2), flat=True),
+        Session(day=date(2026, 1, 3), flat=True),
+        Session(day=date(2026, 1, 6), flat=True),
+        Session(day=date(2026, 1, 7), flat=True),
+        Session(day=date(2026, 1, 8), flat=True),
+        Session(day=date(2026, 1, 9), flat=True),
+    ]
+    expected = [
+        (date(2026, 1, 1), 1),
+        (date(2026, 1, 2), 2),
+        (date(2026, 1, 3), 3),
+        (date(2026, 1, 4), 0),
+        (date(2026, 1, 5), 0),
+        (date(2026, 1, 6), 1),
+        (date(2026, 1, 7), 2),
+        (date(2026, 1, 8), 3),
+        (date(2026, 1, 9), 4),
+    ]
+    assert streak(sessions) == (4, expected)
 
 def test_new_tricks_when_empty() -> None:
     assert list(new_tricks([])) == []
