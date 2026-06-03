@@ -6,6 +6,7 @@ A CLI for tracking skateboarding sessions
 
 - [Typer](https://typer.tiangolo.com/) CLI
 - Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
+- Generates plots with [matplotlib](https://matplotlib.org/)
 - Stores data in a [SQLite](https://sqlite.org) database
 - Imports from and exports to CSV files
 
