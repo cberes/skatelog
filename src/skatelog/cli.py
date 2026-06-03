@@ -8,6 +8,7 @@ from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
 from skatelog.models import Session, Trick
+from skatelog.plots import bar, line, PlotConfig
 import skatelog.queries as query
 import typer
 from typing import Annotated, Iterable
@@ -189,8 +190,11 @@ def list_tricks_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
         console.print(_tricks_table(tricks, include_day=True))
 
 @app.command("list-disciplines")
-def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-                         year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+def list_disciplines_cmd(
+    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+) -> None:
     """List all disciplines."""
     table = Table(title="Disciplines")
     table.add_column("Discipline", style="cyan")
@@ -199,6 +203,7 @@ def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter 
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_discipline_counts(db, start, end)
+    plot_data = []
     for row in sorted(aggs, key=lambda it: it.key):
         match row.days_since:
             case None:
@@ -208,11 +213,18 @@ def list_disciplines_cmd(month: Annotated[str | None, typer.Option(help="Filter 
             case it:
                 last_trained = f"{it} days ago"
         table.add_row(row.key, str(row.count), last_trained)
+        plot_data.append((row.key, row.count))
     console.print(table)
+    if plot_path is not None:
+        config = PlotConfig(title="Discipline training frequency", label_x="Discipline", label_y="Sessions (days)", output_path=plot_path)
+        bar([d for d in plot_data if d[1] != 0], config)
 
 @app.command("list-locations")
-def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-                       year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+def list_locations_cmd(
+    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+) -> None:
     """List all locations."""
     table = Table(title="Locations")
     table.add_column("Where", style="cyan")
@@ -222,13 +234,21 @@ def list_locations_cmd(month: Annotated[str | None, typer.Option(help="Filter to
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_location_counts(db, start, end)
+    plot_data = []
     for row in sorted(aggs, key=lambda it: it.count, reverse=True):
         table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
+        plot_data.append((row.key, row.count))
     console.print(table)
+    if plot_path is not None:
+        config = PlotConfig(title="Location frequency", label_x="Location", label_y="Sessions (days)", output_path=plot_path)
+        bar(plot_data, config)
 
 @app.command("list-shoes")
-def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-                   year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+def list_shoes_cmd(
+    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+) -> None:
     """List all shoes."""
     table = Table(title="Shoes")
     table.add_column("Shoe", style="cyan")
@@ -238,13 +258,21 @@ def list_shoes_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYY
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_shoe_counts(db, start, end)
+    plot_data = []
     for row in sorted(aggs, key=lambda it: it.count, reverse=True):
         table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
+        plot_data.append((row.key, row.count))
     console.print(table)
+    if plot_path is not None:
+        config = PlotConfig(title="Shoe frequency", label_x="Shoe", label_y="Sessions (days)", output_path=plot_path)
+        bar(plot_data, config)
 
 @app.command("list-boards")
-def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-                    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+def list_boards_cmd(
+    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+) -> None:
     """List all boards."""
     table = Table(title="Boards")
     table.add_column("Board", style="cyan")
@@ -254,13 +282,21 @@ def list_boards_cmd(month: Annotated[str | None, typer.Option(help="Filter to YY
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_board_counts(db, start, end)
+    plot_data = []
     for row in sorted(aggs, key=lambda it: it.count, reverse=True):
         table.add_row(row.key, str(row.count), row.start.isoformat(), row.end.isoformat())
+        plot_data.append((row.key, row.count))
     console.print(table)
+    if plot_path is not None:
+        config = PlotConfig(title="Board frequency", label_x="Board", label_y="Sessions (days)", output_path=plot_path)
+        bar(plot_data, config)
 
 @app.command("streak")
-def streak_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-               year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+def streak_cmd(
+    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
+    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+) -> None:
     """Finds best streak and lists current streak by day."""
     table = Table(title="Streak")
     table.add_column("Day", justify="right")
@@ -273,6 +309,9 @@ def streak_cmd(month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM
         table.add_row(day[0].isoformat(), str(day[1]))
     console.print(table)
     console.print(f"[green]Best streak is {best} day{'' if best == 1 else 's'}[/green]")
+    if plot_path is not None:
+        config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", output_path=plot_path)
+        line(days, config)
 
 def main() -> None:
     app()
