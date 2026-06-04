@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from io import BytesIO
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Any, Iterable
@@ -8,7 +10,17 @@ class PlotConfig:
     title: str
     label_x: str
     label_y: str
-    output_path: Path
+    output_path: Path | None = None
+    buf: BytesIO | None = None
+
+def _save_figure(figure: Figure, config: PlotConfig) -> None:
+    if config.output_path is not None:
+        figure.savefig(config.output_path)
+
+    if config.buf is not None:
+        figure.savefig(config.buf, format="png")
+        config.buf.seek(0)
+        plt.close(figure)
 
 def line(data: Iterable[tuple[Any, int | float]], config: PlotConfig) -> None:
     fig, ax = plt.subplots()
@@ -20,8 +32,7 @@ def line(data: Iterable[tuple[Any, int | float]], config: PlotConfig) -> None:
            title=config.title)
     ax.grid()
 
-    fig.savefig(config.output_path)
-
+    _save_figure(fig, config)
 
 def bar(data: Iterable[tuple[Any, int | float]], config: PlotConfig) -> None:
     fig, ax = plt.subplots()
@@ -39,7 +50,7 @@ def bar(data: Iterable[tuple[Any, int | float]], config: PlotConfig) -> None:
         ax.tick_params(axis='x', rotation=90)
         fig.tight_layout()
 
-    fig.savefig(config.output_path)
+    _save_figure(fig, config)
 
 def pie(data: Iterable[tuple[Any, int]], config: PlotConfig) -> None:
     fig, ax = plt.subplots()
@@ -50,4 +61,4 @@ def pie(data: Iterable[tuple[Any, int]], config: PlotConfig) -> None:
            ylabel=config.label_y,
            title=config.title)
 
-    fig.savefig(config.output_path)
+    _save_figure(fig, config)

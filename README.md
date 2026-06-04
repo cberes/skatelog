@@ -33,6 +33,8 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 
 ## Usage
 
+### CLI
+
 - `uv run skatelog add` logs a new session
 - `uv run skatelog list` lists sessions
 - `uv run skatelog show 2026-05-22` shows the session on the specified date
@@ -46,6 +48,10 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - `uv run skatelog delete 2026-05-22` deletes the session on the specified date
 - `uv run skatelog delete-trick 100` deletes the trick with the specified ID
 - `uv run skatelog streak` finds streaks of days skated
+
+### API
+
+`uv run fastapi dev` or `uv run fastapi run`
 
 ## Development
 
