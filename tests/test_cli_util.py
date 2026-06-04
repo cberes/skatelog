@@ -90,6 +90,11 @@ def test_streak_when_skated_every_day() -> None:
     sessions = (Session(day=d, flat=True) for d in days)
     assert streak(sessions) == Streak(9, [StreakDay(days[i], i + 1) for i in range(0, len(days))])
 
+def test_streak_converts_to_plot_data() -> None:
+    days = [date(2026, 1, i) for i in range(1, 10)]
+    sessions = (Session(day=d, flat=True) for d in days)
+    assert streak(sessions).to_plot_data() == [(days[i], i + 1) for i in range(0, len(days))]
+
 def test_streak_sorts_sessions() -> None:
     days = [date(2026, 1, i) for i in range(1, 10)]
     sessions = (Session(day=d, flat=True) for d in reversed(days))

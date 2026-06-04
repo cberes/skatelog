@@ -312,7 +312,7 @@ def streak_cmd(
     console.print(f"[green]Best streak is {best} day{'' if best == 1 else 's'}[/green]")
     if plot_path is not None:
         config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", output_path=plot_path)
-        line([(d.day, d.streak) for d in streak_result.days], config)
+        line(streak_result.to_plot_data(), config)
 
 def main() -> None:
     app()

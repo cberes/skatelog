@@ -24,6 +24,9 @@ class Streak:
     best: int
     days: list[StreakDay]
 
+    def to_plot_data(self) -> list[tuple[date, int]]:
+        return [(d.day, d.streak) for d in self.days]
+
 _DISCIPLINE_ATTRS = [
     "a_frame",
     "bank",
