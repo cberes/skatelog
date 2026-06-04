@@ -14,6 +14,16 @@ class DisciplineResult:
     ambiguous: list[str]
     unknown: list[str]
 
+@dataclass
+class StreakDay:
+    day: date
+    streak: int
+
+@dataclass
+class Streak:
+    best: int
+    days: list[StreakDay]
+
 _DISCIPLINE_ATTRS = [
     "a_frame",
     "bank",
@@ -72,7 +82,7 @@ def date_range(month: str | None, year: str | None) -> tuple[date, date]:
     else:
         return (date.min, date.max)
 
-def streak(sessions: Iterable[Session]) -> tuple[int, list[tuple[date, int]]]:
+def streak(sessions: Iterable[Session]) -> Streak:
     """Finds streaks of skated days from given sessions."""
     sorted_sessions = sorted((s for s in sessions if s.skated), key=lambda it: it.day)
     current_streak = 0
@@ -81,16 +91,16 @@ def streak(sessions: Iterable[Session]) -> tuple[int, list[tuple[date, int]]]:
     for session in sorted_sessions:
         if not days:
             current_streak = 1
-        elif days[-1][0] + timedelta(days=1) == session.day:
+        elif days[-1].day + timedelta(days=1) == session.day:
             current_streak += 1
         else:
-            delta = session.day - days[-1][0]
-            missed_days = (days[-1][0] + timedelta(days=i) for i in range(1, delta.days))
-            days += [(day, 0) for day in missed_days]
+            delta = session.day - days[-1].day
+            missed_days = (days[-1].day + timedelta(days=i) for i in range(1, delta.days))
+            days += [StreakDay(day, 0) for day in missed_days]
             current_streak = 1
-        days.append((session.day, current_streak))
+        days.append(StreakDay(session.day, current_streak))
         best_streak = max(best_streak, current_streak)
-    return (best_streak, days)
+    return Streak(best_streak, days)
 
 def new_tricks(tricks: Iterable[Trick]) -> Iterator[Trick]:
     """Finds only new tricks from the incoming list, which is assumed to be sorted chronlogically."""

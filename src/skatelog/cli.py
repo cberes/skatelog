@@ -304,14 +304,15 @@ def streak_cmd(
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         sessions = query.find_by_date_range(db, start, end)
-        best, days = streak(sessions)
-    for day in days:
-        table.add_row(day[0].isoformat(), str(day[1]))
+        streak_result = streak(sessions)
+    for day in streak_result.days:
+        table.add_row(day.day.isoformat(), str(day.streak))
+    best = streak_result.best
     console.print(table)
     console.print(f"[green]Best streak is {best} day{'' if best == 1 else 's'}[/green]")
     if plot_path is not None:
         config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", output_path=plot_path)
-        line(days, config)
+        line([(d.day, d.streak) for d in streak_result.days], config)
 
 def main() -> None:
     app()

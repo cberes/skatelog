@@ -1,13 +1,11 @@
-from collections.abc import Iterator
 from datetime import date
 from fastapi import FastAPI
 from sqlmodel import Session as DBSession
-from skatelog.cli_util import date_range, new_tricks, streak
+from skatelog.cli_util import date_range, new_tricks, streak, Streak
 from skatelog.db import get_engine
 from skatelog.models import Session, Trick
 import skatelog.queries as query
 from skatelog.queries import SessionAggregate
-from typing import Any
 
 app = FastAPI()
 
@@ -21,84 +19,76 @@ def show_cmd(day: str) -> Session | None:
 
 @app.get("/sessions")
 def list_cmd(month: str | None = None,
-             year: str | None = None) -> Iterator[Session]:
+             year: str | None = None) -> list[Session]:
     """List sessions."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
-        for session in query.find_by_date_range(db, start, end):
-            yield session
+        sessions = query.find_by_date_range(db, start, end)
+        return list(sessions)
 
 @app.get("/tricks")
 def list_tricks_cmd(month: str | None = None,
                     year: str | None = None,
-                    new: bool = False) -> Iterator[Trick]:
+                    new: bool = False) -> list[Trick]:
     """List tricks."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         tricks = query.find_tricks_by_date_range(db, start, end)
         tricks = new_tricks(tricks) if new else tricks
-        return tricks
+        return list(tricks)
 
 @app.get("/disciplines")
 def list_disciplines_cmd(
     month: str | None = None,
     year: str | None = None,
-) -> Iterator[SessionAggregate]:
+) -> list[SessionAggregate]:
     """List all disciplines."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_discipline_counts(db, start, end)
-    for row in sorted(aggs, key=lambda it: it.key):
-        yield row
+    return list(sorted(aggs, key=lambda it: it.key))
 
 @app.get("/locations")
 def list_locations_cmd(
     month: str | None = None,
     year: str | None = None,
-) -> Iterator[SessionAggregate]:
+) -> list[SessionAggregate]:
     """List all locations."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_location_counts(db, start, end)
-    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
-        yield row
+    return list(sorted(aggs, key=lambda it: it.count, reverse=True))
 
 @app.get("/shoes")
 def list_shoes_cmd(
     month: str | None = None,
     year: str | None = None,
-) -> Iterator[SessionAggregate]:
+) -> list[SessionAggregate]:
     """List all shoes."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_shoe_counts(db, start, end)
-    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
-        yield row
+    return list(sorted(aggs, key=lambda it: it.count, reverse=True))
 
 @app.get("/boards")
 def list_boards_cmd(
     month: str | None = None,
     year: str | None = None,
-) -> Iterator[SessionAggregate]:
+) -> list[SessionAggregate]:
     """List all boards."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         aggs = query.find_board_counts(db, start, end)
-    for row in sorted(aggs, key=lambda it: it.count, reverse=True):
-        yield row
+    return list(sorted(aggs, key=lambda it: it.count, reverse=True))
 
 @app.get("/streak")
 def streak_cmd(
     month: str | None = None,
     year: str | None = None,
-) -> dict[str, Any]:
+) -> Streak:
     """Finds best streak and lists current streak by day."""
     start, end = date_range(month, year)
     with DBSession(get_engine()) as db:
         sessions = query.find_by_date_range(db, start, end)
-        best, days = streak(sessions)
-    return {
-        "best": best,
-        "days": [{"day": day[0], "streak": day[1]} for day in days],
-    }
+        return streak(sessions)
 

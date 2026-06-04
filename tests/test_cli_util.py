@@ -1,6 +1,6 @@
 from datetime import date
 import pytest
-from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak
+from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak, Streak, StreakDay
 from skatelog.models import Session, Stance, Trick
 
 def test_date_range_returns_min_max_as_default() -> None:
@@ -78,22 +78,22 @@ def test_find_disciplines_with_ambiguous_inputs() -> None:
     assert result.unknown == []
 
 def test_streak_when_empty() -> None:
-    assert streak([]) == (0, [])
+    assert streak([]) == Streak(0, [])
 
 def test_streak_when_not_skated() -> None:
     days = (date(2026, 1, i) for i in range(1, 10))
     sessions = (Session(day=d) for d in days)
-    assert streak(sessions) == (0, [])
+    assert streak(sessions) == Streak(0, [])
 
 def test_streak_when_skated_every_day() -> None:
     days = [date(2026, 1, i) for i in range(1, 10)]
     sessions = (Session(day=d, flat=True) for d in days)
-    assert streak(sessions) == (9, [(days[i], i + 1) for i in range(0, len(days))])
+    assert streak(sessions) == Streak(9, [StreakDay(days[i], i + 1) for i in range(0, len(days))])
 
 def test_streak_sorts_sessions() -> None:
     days = [date(2026, 1, i) for i in range(1, 10)]
     sessions = (Session(day=d, flat=True) for d in reversed(days))
-    assert streak(sessions) == (9, [(days[i], i + 1) for i in range(0, len(days))])
+    assert streak(sessions) == Streak(9, [StreakDay(days[i], i + 1) for i in range(0, len(days))])
 
 def test_streak_detects_breaks() -> None:
     sessions = [
@@ -110,7 +110,7 @@ def test_streak_detects_breaks() -> None:
         (date(2026, 1, 5), 0),
         (date(2026, 1, 6), 1),
     ]
-    assert streak(sessions) == (3, expected)
+    assert streak(sessions) == Streak(3, [StreakDay(*x) for x in expected])
 
 def test_streak_updates_best_streak() -> None:
     sessions = [
@@ -133,7 +133,7 @@ def test_streak_updates_best_streak() -> None:
         (date(2026, 1, 8), 3),
         (date(2026, 1, 9), 4),
     ]
-    assert streak(sessions) == (4, expected)
+    assert streak(sessions) == Streak(4, [StreakDay(*x) for x in expected])
 
 def test_new_tricks_when_empty() -> None:
     assert list(new_tricks([])) == []
