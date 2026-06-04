@@ -4,6 +4,7 @@ A CLI for tracking skateboarding sessions
 
 ## Features
 
+- [FastAPI](https://fastapi.tiangolo.com/) API
 - [Typer](https://typer.tiangolo.com/) CLI
 - Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
 - Generates plots with [matplotlib](https://matplotlib.org/)
