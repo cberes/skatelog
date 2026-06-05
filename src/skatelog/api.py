@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from datetime import date
-from fastapi import Depends, FastAPI, Response
+from fastapi import Depends, FastAPI, HTTPException, Response
 from io import BytesIO
 import matplotlib
 from sqlmodel import Session as DBSession
@@ -33,6 +33,14 @@ def show_api(db: Annotated[DBSession, Depends(_get_db)],
     target = date.fromisoformat(day)
     session = query.find_session(db, target)
     return session
+
+@app.get("/sessions/{day}/tricks")
+def show_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
+                    day: str) -> list[Trick]:
+    """Show a day's session."""
+    target = date.fromisoformat(day)
+    session = query.find_session(db, target)
+    return session.tricks if session else []
 
 @app.get("/sessions")
 def list_api(db: Annotated[DBSession, Depends(_get_db)],
@@ -173,4 +181,34 @@ def plot_streak_api(
     config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", buf=buf)
     line(streak_result.to_plot_data(), config)
     return Response(content=buf.getvalue(), media_type="image/png")
+
+@app.post("/sessions", status_code=201)
+def add_session_api(db: Annotated[DBSession, Depends(_get_db)],
+                    session: Session) -> Session:
+    """Creates a new session."""
+    if not session.tricks:
+        session.tricks = []
+        session.parse_tricks()
+
+    if not session.is_good:
+        raise HTTPException(status_code=400, detail="Bad session")
+
+    query.create_session(db, session)
+    return session
+
+@app.delete("/sessions/{day}", status_code=204)
+def delete_session_api(db: Annotated[DBSession, Depends(_get_db)],
+                       day: str) -> None:
+    """Delete session by day."""
+    target = date.fromisoformat(day)
+    query.delete_session(db, target)
+
+@app.delete("/tricks/{id}", status_code=204)
+def delete_trick_api(db: Annotated[DBSession, Depends(_get_db)],
+                     id: int) -> None:
+    """Delete trick by ID."""
+    existing = db.get(Trick, id)
+    if existing is not None:
+        db.delete(existing)
+        db.commit()
 
