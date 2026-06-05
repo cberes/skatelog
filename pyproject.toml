@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-skatelog = "skatelog:main"
+skatelog = "skatelog:cli_main"
 
 [build-system]
 requires = ["uv_build>=0.11.14,<0.12.0"]
@@ -32,4 +32,4 @@ dev = [
 ]
 
 [tool.fastapi]
-entrypoint = "skatelog.api:app"
+entrypoint = "skatelog:api_main"
