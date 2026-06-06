@@ -18,7 +18,7 @@ And I like to keep track of what I work on and also how long my gear lasts.
 I've been keeping this data in a spreadsheet since 2024.
 
 Also, I used to be comfortable with Python.
-I even used it profesionally around 2014 to 2015.
+I even used it professionally around 2014 to 2015.
 Since then I've barely used Python at all.
 I decided to work on this project with the goal of re-learning Python.
 
