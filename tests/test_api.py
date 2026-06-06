@@ -50,11 +50,19 @@ def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> 
 
     assert resp.status_code == 201
     body = resp.json()
-    print(body)
     assert body["day"] == day.isoformat()
     assert body["where"] == "Skatepark"
     assert body["a_frame"]
     assert db.get(Session, day) is not None
+
+def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    resp = client.post("/sessions", json={"day": day.isoformat()})
+
+    assert resp.status_code == 400
+    body = resp.json()
+    assert body["detail"] == "Bad session"
+    assert db.get(Session, day) is None
 
 # def test_create_session_persists_new_tricks(db: DBSession) -> None:
 #     day = date(2026, 1, 1)
