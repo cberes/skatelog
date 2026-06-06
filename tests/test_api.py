@@ -1,0 +1,313 @@
+from collections.abc import Iterator
+from datetime import date
+from fastapi.testclient import TestClient
+import pytest
+from sqlmodel import Session as DBSession
+from sqlmodel import SQLModel, create_engine
+from sqlmodel.pool import StaticPool
+from skatelog.api import app, _get_db
+from skatelog.models import Session
+
+@pytest.fixture
+def db() -> Iterator[DBSession]:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    with DBSession(engine) as session:
+        yield session
+    SQLModel.metadata.drop_all(engine)
+
+@pytest.fixture
+def client(db: DBSession) -> Iterator[TestClient]:
+    def override_get_db() -> Iterator[DBSession]:
+        yield db
+
+    app.dependency_overrides[_get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+def test_show_session_returns_404_when_no_session(db: DBSession, client: TestClient) -> None:
+    assert client.get("sessions/2026-01-01").status_code == 404
+
+def test_show_session_returns_session(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    session = _session_skatepark(day)
+    db.add(session)
+    db.commit()
+
+    resp = client.get(f"/sessions/{day.isoformat()}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["where"] == "Skatepark"
+
+def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    resp = client.post("/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True})
+
+    assert resp.status_code == 201
+    body = resp.json()
+    print(body)
+    assert body["day"] == day.isoformat()
+    assert body["where"] == "Skatepark"
+    assert body["a_frame"]
+    assert db.get(Session, day) is not None
+
+# def test_create_session_persists_new_tricks(db: DBSession) -> None:
+#     day = date(2026, 1, 1)
+#     session = _session_skatepark(day)
+#     tricks = [Trick(day=session.day, name="kickflip")]
+#     session.tricks = tricks.copy()
+#     q.create_session(db, session)
+#     found = db.get(Session, day)
+#     assert found is session
+#     found_tricks = db.exec(select(Trick).where(Trick.day == session.day)).all()
+#     assert found_tricks == tricks
+#
+# def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
+#     day = date(2026, 1, 1)
+#     session1 = _session_skatepark(day)
+#     db.add(session1)
+#     db.commit()
+#     session2 = _session_tennis_court(day)
+#     q.create_session(db, session2)
+#     found = db.get(Session, day)
+#     assert found is not None
+#     assert found.day == day
+#     assert found.disciplines == {Discipline.BOWL}
+#
+# def test_create_session_deletes_duplicate_tricks(db: DBSession) -> None:
+#     day = date(2026, 1, 1)
+#     session1 = _session_skatepark(day)
+#     session1.tricks = [Trick(day=session1.day, name="kickflip")]
+#     db.add(session1)
+#     db.commit()
+#     session2 = _session_tennis_court(day)
+#     tricks = [Trick(day=day, name="heelflip")]
+#     session2.tricks = tricks.copy()
+#     q.create_session(db, session2)
+#     found = db.get(Session, day)
+#     assert found is session2
+#     found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
+#     assert found_tricks == tricks
+#
+# def test_delete_session(db: DBSession) -> None:
+#     day = date(2026, 1, 1)
+#     session = _session_skatepark(day)
+#     db.add(session)
+#     db.commit()
+#     assert db.get(Session, day) is not None
+#     assert q.delete_session(db, day)
+#     assert db.get(Session, day) is None
+#
+# def test_delete_session_returns_false_when_not_found(db: DBSession) -> None:
+#     assert not q.delete_session(db, date(2026, 1, 1))
+#
+# def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
+#     day1, day2, day3 = (date(2026, 1, i + 1) for i in range(3))
+#     session1 = _session_skatepark(day1)
+#     session2 = _session_skatepark(day2)
+#     session3 = _session_tennis_court(day3)
+#     db.add_all([session1, session3, session2])
+#     db.commit()
+#     most_recent = q.find_most_recent_session(db)
+#     assert most_recent == session3
+#
+# def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
+#     day1, day2 = (date(2026, 1, i + 1) for i in range(2))
+#     session1 = _session_skatepark(day1)
+#     session2 = _session_empty(day2)
+#     db.add_all([session1, session2])
+#     db.commit()
+#     most_recent = q.find_most_recent_session(db)
+#     assert most_recent == session1
+#
+# def test_find_by_date_range(db: DBSession) -> None:
+#     days = [date(2026, 1, i + 1) for i in range(10)]
+#     sessions = [_session_skatepark(d) for d in days]
+#     db.add_all(sessions)
+#     db.commit()
+#     found = q.find_by_date_range(db, days[1], days[9])
+#     assert list(found) == sessions[1:9]
+#
+# def test_find_tricks_by_date_range(db: DBSession) -> None:
+#     days = [date(2026, 1, i + 1) for i in range(10)]
+#     tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
+#     db.add_all(tricks)
+#     db.commit()
+#     found = q.find_tricks_by_date_range(db, days[1], days[9])
+#     assert list(found) == tricks[1:9]
+#
+# class TestCountByDateRange:
+#     @pytest.fixture(autouse=True)
+#     def setup_db(self, db: DBSession) -> None:
+#         days = [date(2026, 1, i + 1) for i in range(15)]
+#         self.days = days
+#         sessions1 = [_session_skatepark(d) for d in days[0:10]]
+#         sessions2 = [_session_tennis_court(d) for d in days[10:15]]
+#         db.add_all(sessions1 + sessions2)
+#         db.commit()
+#
+#     def test_find_locations_with_start_filters_by_day(self, db: DBSession) -> None:
+#         found = q.find_locations(db, start=self.days[-1])
+#         assert found == {"Tennis Court"}
+#
+#     def test_find_locations_without_start_includes_all(self, db: DBSession) -> None:
+#         found = q.find_locations(db)
+#         assert found == {"Skatepark", "Tennis Court"}
+#
+#     def test_find_shoes_with_start_filters_by_day(self, db: DBSession) -> None:
+#         found = q.find_shoes(db, start=self.days[-1])
+#         assert found == {"Cupsole"}
+#
+#     def test_find_shoes_without_start_includes_all(self, db: DBSession) -> None:
+#         found = q.find_shoes(db)
+#         assert found == {"Vulc", "Cupsole"}
+#
+#     def test_find_boards_with_start_filters_by_day(self, db: DBSession) -> None:
+#         found = q.find_boards(db, start=self.days[-1])
+#         assert found == {"Popsicle"}
+#
+#     def test_find_boards_without_start_includes_all(self, db: DBSession) -> None:
+#         found = q.find_boards(db)
+#         assert found == {"Egg", "Popsicle"}
+#
+#     def test_find_location_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+#         aggs = q.find_location_counts(db, start=self.days[1], end=self.days[14])
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Tennis Court"
+#         assert aggs[0].count == 4
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[13]
+#         assert aggs[1].key == "Skatepark"
+#         assert aggs[1].count == 9
+#         assert aggs[1].start == self.days[1]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_location_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+#         aggs = q.find_location_counts(db)
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Tennis Court"
+#         assert aggs[0].count == 5
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[14]
+#         assert aggs[1].key == "Skatepark"
+#         assert aggs[1].count == 10
+#         assert aggs[1].start == self.days[0]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_shoe_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
+#         aggs = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Cupsole"
+#         assert aggs[0].count == 4
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[13]
+#         assert aggs[1].key == "Vulc"
+#         assert aggs[1].count == 9
+#         assert aggs[1].start == self.days[1]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_shoe_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+#         aggs = q.find_shoe_counts(db)
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Cupsole"
+#         assert aggs[0].count == 5
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[14]
+#         assert aggs[1].key == "Vulc"
+#         assert aggs[1].count == 10
+#         assert aggs[1].start == self.days[0]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_board_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
+#         aggs = q.find_board_counts(db, start=self.days[1], end=self.days[14])
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Popsicle"
+#         assert aggs[0].count == 4
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[13]
+#         assert aggs[1].key == "Egg"
+#         assert aggs[1].count == 9
+#         assert aggs[1].start == self.days[1]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_board_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
+#         aggs = q.find_board_counts(db)
+#         aggs = sorted(aggs, key=lambda it: it.count)
+#         assert len(aggs) == 2
+#         assert aggs[0].key == "Popsicle"
+#         assert aggs[0].count == 5
+#         assert aggs[0].start == self.days[10]
+#         assert aggs[0].end == self.days[14]
+#         assert aggs[1].key == "Egg"
+#         assert aggs[1].count == 10
+#         assert aggs[1].start == self.days[0]
+#         assert aggs[1].end == self.days[9]
+#
+#     def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
+#         aggs = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
+#         aggs = sorted(aggs, key=lambda it: it.key)
+#         assert aggs[0].key == str(Discipline.A_FRAME)
+#         assert aggs[0].count == 9
+#         assert aggs[0].start == self.days[1]
+#         assert aggs[0].end == self.days[9]
+#         assert aggs[0].days_since is not None
+#         assert aggs[0].days_since > 1
+#         assert aggs[1].key == str(Discipline.BANK)
+#         assert aggs[1].count == 0
+#         assert aggs[1].days_since is None
+#         assert aggs[2].key == str(Discipline.BOWL)
+#         assert aggs[2].count == 4
+#         assert aggs[2].start == self.days[10]
+#         assert aggs[2].end == self.days[13]
+#         assert aggs[2].days_since == aggs[0].days_since - 4
+#
+#     def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
+#         aggs = q.find_discipline_counts(db)
+#         aggs = sorted(aggs, key=lambda it: it.key)
+#         assert aggs[0].key == str(Discipline.A_FRAME)
+#         assert aggs[0].count == 10
+#         assert aggs[0].start == self.days[0]
+#         assert aggs[0].end == self.days[9]
+#         assert aggs[0].days_since is not None
+#         assert aggs[0].days_since > 1
+#         assert aggs[1].key == str(Discipline.BANK)
+#         assert aggs[1].count == 0
+#         assert aggs[1].days_since is None
+#         assert aggs[2].key == str(Discipline.BOWL)
+#         assert aggs[2].count == 5
+#         assert aggs[2].start == self.days[10]
+#         assert aggs[2].end == self.days[14]
+#         assert aggs[2].days_since == aggs[0].days_since - 5
+
+def _session_skatepark(day: date) -> Session:
+    return Session(
+        day=day,
+        where="Skatepark",
+        shoe="Vulc",
+        board="Egg",
+        notes="kickflip",
+        a_frame=True,
+    )
+
+# def _session_tennis_court(day: date) -> Session:
+#     return Session(
+#         day=day,
+#         where="Tennis Court",
+#         shoe="Cupsole",
+#         board="Popsicle",
+#         notes="heelflip",
+#         bowl=True,
+#     )
+#
+# def _session_empty(day: date) -> Session:
+#     return Session(day=day)

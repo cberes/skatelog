@@ -124,6 +124,9 @@ class Discipline(StrEnum):
 
 
 class Session(SQLModel, table=True):
+    # This seems to fix deserialization, where day is deserialized to a str instead of date
+    model_config = {"validate_assignment": True}
+
     day: date = Field(primary_key=True)
 
     a_frame: bool = False

@@ -32,6 +32,8 @@ def show_api(db: Annotated[DBSession, Depends(_get_db)],
     """Show a day's session."""
     target = date.fromisoformat(day)
     session = query.find_session(db, target)
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"No session for {day}")
     return session
 
 @app.get("/sessions/{day}/tricks")
@@ -40,7 +42,9 @@ def show_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
     """Show a day's session."""
     target = date.fromisoformat(day)
     session = query.find_session(db, target)
-    return session.tricks if session else []
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"No session for {day}")
+    return session.tricks
 
 @app.get("/sessions")
 def list_api(db: Annotated[DBSession, Depends(_get_db)],

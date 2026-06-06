@@ -74,6 +74,7 @@ def create_session(db: DBSession, session: Session) -> None:
     _delete_by_day(db, session.day)
     db.add(session)
     db.commit()
+    db.refresh(session) # otherwise add-session API returns {} because of expire_on_commit
 
 def delete_session(db: DBSession, target: date) -> bool:
     deleted = _delete_by_day(db, target)
