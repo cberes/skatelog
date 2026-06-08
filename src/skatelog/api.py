@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from datetime import date
 from fastapi import Depends, FastAPI, HTTPException, Response
 from io import BytesIO
@@ -10,17 +10,14 @@ from skatelog.models import Session, Trick
 from skatelog.plots import bar, line, PlotConfig
 import skatelog.queries as query
 from skatelog.queries import SessionAggregate
-from typing import Annotated, AsyncGenerator
+from typing import Annotated
 
 matplotlib.use("Agg")
 app = FastAPI()
 
-async def _get_db() -> AsyncGenerator[DBSession, None]:
-    db = DBSession(get_engine())
-    try:
+def _get_db() -> Iterator[DBSession]:
+    with DBSession(get_engine()) as db:
         yield db
-    finally:
-        db.close()
 
 def _to_plot_data(results: Iterable[SessionAggregate]) -> list[tuple[str, int]]:
     sorted_results = sorted(list(results), key=lambda it: it.count, reverse=True)
