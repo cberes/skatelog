@@ -1,0 +1,10 @@
+{% for s in sessions %}
+<tr>
+	<td>{{ s.day }}</td>
+	<td>{{ s.disciplines | map(attribute="value") | join(", ") or "-" }}</td>
+	<td>{{ s.where or "-" }}</td>
+	<td>{{ s.shoe or "-" }}</td>
+	<td>{{ s.board or "-" }}</td>
+	<td>{{ s.notes or "-" }}</td>
+</tr>
+{% endfor %}

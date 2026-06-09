@@ -1,0 +1,7 @@
+{% for i in items %}
+<tr>
+	<td>{{ i.key }}</td>
+	<td>{{ i.count or "0" }}</td>
+	<td>{{ i.end or "Never" }}</td>
+</tr>
+{% endfor %}

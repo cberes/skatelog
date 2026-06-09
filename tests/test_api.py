@@ -5,7 +5,8 @@ import pytest
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine
 from sqlmodel.pool import StaticPool
-from skatelog.api import app, _get_db
+from skatelog.api import app
+from skatelog.deps import get_db
 from skatelog.models import Session
 
 @pytest.fixture
@@ -25,7 +26,7 @@ def client(db: DBSession) -> Iterator[TestClient]:
     def override_get_db() -> Iterator[DBSession]:
         yield db
 
-    app.dependency_overrides[_get_db] = override_get_db
+    app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

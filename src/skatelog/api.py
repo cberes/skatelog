@@ -1,11 +1,12 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from datetime import date
 from fastapi import Depends, FastAPI, HTTPException, Response
 from io import BytesIO
 import matplotlib
 from sqlmodel import Session as DBSession
 from skatelog.cli_util import date_range, new_tricks, streak, Streak
-from skatelog.db import get_engine
+from skatelog.dashboard import router as dashboard_router
+from skatelog.deps import get_db
 from skatelog.models import Session, Trick
 from skatelog.plots import bar, line, PlotConfig
 import skatelog.queries as query
@@ -14,17 +15,14 @@ from typing import Annotated
 
 matplotlib.use("Agg")
 app = FastAPI()
-
-def _get_db() -> Iterator[DBSession]:
-    with DBSession(get_engine()) as db:
-        yield db
+app.include_router(dashboard_router)
 
 def _to_plot_data(results: Iterable[SessionAggregate]) -> list[tuple[str, int]]:
     sorted_results = sorted(list(results), key=lambda it: it.count, reverse=True)
     return [(result.key, result.count) for result in sorted_results]
 
 @app.get("/sessions/{day}")
-def show_api(db: Annotated[DBSession, Depends(_get_db)],
+def show_api(db: Annotated[DBSession, Depends(get_db)],
              day: str) -> Session | None:
     """Show a day's session."""
     target = date.fromisoformat(day)
@@ -34,7 +32,7 @@ def show_api(db: Annotated[DBSession, Depends(_get_db)],
     return session
 
 @app.get("/sessions/{day}/tricks")
-def show_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
+def show_tricks_api(db: Annotated[DBSession, Depends(get_db)],
                     day: str) -> list[Trick]:
     """Show a day's session."""
     target = date.fromisoformat(day)
@@ -44,7 +42,7 @@ def show_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
     return session.tricks
 
 @app.get("/sessions")
-def list_api(db: Annotated[DBSession, Depends(_get_db)],
+def list_api(db: Annotated[DBSession, Depends(get_db)],
              month: str | None = None,
              year: str | None = None) -> list[Session]:
     """List sessions."""
@@ -53,7 +51,7 @@ def list_api(db: Annotated[DBSession, Depends(_get_db)],
     return list(sessions)
 
 @app.get("/tricks")
-def list_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
+def list_tricks_api(db: Annotated[DBSession, Depends(get_db)],
                     month: str | None = None,
                     year: str | None = None,
                     new: bool = False) -> list[Trick]:
@@ -65,7 +63,7 @@ def list_tricks_api(db: Annotated[DBSession, Depends(_get_db)],
 
 @app.get("/disciplines")
 def list_disciplines_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> list[SessionAggregate]:
@@ -76,7 +74,7 @@ def list_disciplines_api(
 
 @app.get("/disciplines.png", response_class=Response)
 def plot_disciplines_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Response:
@@ -89,7 +87,7 @@ def plot_disciplines_api(
 
 @app.get("/locations")
 def list_locations_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> list[SessionAggregate]:
@@ -100,7 +98,7 @@ def list_locations_api(
 
 @app.get("/locations.png", response_class=Response)
 def plot_locations_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Response:
@@ -113,7 +111,7 @@ def plot_locations_api(
 
 @app.get("/shoes")
 def list_shoes_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> list[SessionAggregate]:
@@ -124,7 +122,7 @@ def list_shoes_api(
 
 @app.get("/shoes.png", response_class=Response)
 def plot_shoes_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Response:
@@ -137,7 +135,7 @@ def plot_shoes_api(
 
 @app.get("/boards")
 def list_boards_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> list[SessionAggregate]:
@@ -148,7 +146,7 @@ def list_boards_api(
 
 @app.get("/boards.png", response_class=Response)
 def plot_boards_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Response:
@@ -161,7 +159,7 @@ def plot_boards_api(
 
 @app.get("/streak")
 def streak_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Streak:
@@ -172,7 +170,7 @@ def streak_api(
 
 @app.get("/streak.png", response_class=Response)
 def plot_streak_api(
-    db: Annotated[DBSession, Depends(_get_db)],
+    db: Annotated[DBSession, Depends(get_db)],
     month: str | None = None,
     year: str | None = None,
 ) -> Response:
@@ -184,7 +182,7 @@ def plot_streak_api(
     return Response(content=buf.getvalue(), media_type="image/png")
 
 @app.post("/sessions", status_code=201)
-def add_session_api(db: Annotated[DBSession, Depends(_get_db)],
+def add_session_api(db: Annotated[DBSession, Depends(get_db)],
                     session: Session) -> Session:
     """Creates a new session."""
     if not session.tricks:
@@ -198,14 +196,14 @@ def add_session_api(db: Annotated[DBSession, Depends(_get_db)],
     return session
 
 @app.delete("/sessions/{day}", status_code=204)
-def delete_session_api(db: Annotated[DBSession, Depends(_get_db)],
+def delete_session_api(db: Annotated[DBSession, Depends(get_db)],
                        day: str) -> None:
     """Delete session by day."""
     target = date.fromisoformat(day)
     query.delete_session(db, target)
 
 @app.delete("/tricks/{id}", status_code=204)
-def delete_trick_api(db: Annotated[DBSession, Depends(_get_db)],
+def delete_trick_api(db: Annotated[DBSession, Depends(get_db)],
                      id: int) -> None:
     """Delete trick by ID."""
     existing = db.get(Trick, id)

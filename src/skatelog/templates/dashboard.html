@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Skatelog</title>
+	<script src="https://unpkg.com/htmx.org@2"></script>
+	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+</head>
+
+<body>
+	<header>
+		<nav id="top">
+			<a href="#top">Home</a>
+			<a href="#sessions">Sessions</a>
+			<a href="#disciplines">Disciplines</a>
+			<a href="#locations">Locations</a>
+			<a href="#shoes">Shoes</a>
+			<a href="#boards">Boards</a>
+		</nav>
+		<h1>Skatelog</h1>
+		<p>Track your skateboard sessions</p>
+	</header>
+	<main>
+
+		<form hx-get="/sessions.html" hx-target="#sessions" hx-swap="innerHTML"
+			hx-trigger="change, input delay:500ms"
+			hx-on::after-request="htmx.trigger('#disciplines', 'filters-changed')"
+			hx-on::after-request="htmx.trigger('#locations', 'filters-changed')"
+			hx-on::after-request="htmx.trigger('#shoes', 'filters-changed')"
+			hx-on::after-request="htmx.trigger('#boards', 'filters-changed')">
+			<label for="month">Filter by date:</label>
+
+			<select id="month" name="month">
+				<option value="" selected>- Month -</option>
+				<option value="01">January</option>
+				<option value="02">February</option>
+				<option value="03">March</option>
+				<option value="04">April</option>
+				<option value="05">May</option>
+				<option value="06">June</option>
+				<option value="07">July</option>
+				<option value="08">August</option>
+				<option value="09">September</option>
+				<option value="10">October</option>
+				<option value="11">November</option>
+				<option value="12">December</option>
+			</select>
+
+			<input type="number" id="year" name="year" value="2026">
+		</form>
+
+		<h2>Sessions</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Day</th>
+					<th>Disciplines</th>
+					<th>Where</th>
+					<th>Shoe</th>
+					<th>Board</th>
+					<th>Notes</th>
+				</tr>
+			</thead>
+			<tbody id="sessions">
+				{% include "_session_rows.html" %}
+			</tbody>
+		</table>
+
+		<h3>Disciplines</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Discipline</th>
+					<th>Count</th>
+					<th>Last trained</th>
+				</tr>
+			</thead>
+			<tbody id="disciplines" hx-get="/disciplines.html" hx-trigger="filters-changed from:body"
+				hx-include="form">
+				{% include "_session_aggregate_relative.html" %}
+			</tbody>
+		</table>
+
+		<img src="/disciplines.png" alt="Discipline training frequency" />
+
+		<h3>Locations</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Location</th>
+					<th>Count</th>
+					<th>Start</th>
+					<th>End</th>
+				</tr>
+			</thead>
+			<tbody id="locations" hx-get="/locations.html" hx-trigger="filters-changed from:body"
+				hx-include="form">
+				{% include "_session_aggregate.html" %}
+			</tbody>
+		</table>
+
+		<img src="/locations.png" alt="Location frequency" />
+
+		<h3>Shoes</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Shoe</th>
+					<th>Count</th>
+					<th>Start</th>
+					<th>End</th>
+				</tr>
+			</thead>
+			<tbody id="shoes" hx-get="/shoes.html" hx-trigger="filters-changed from:body" hx-include="form">
+				{% include "_session_aggregate.html" %}
+			</tbody>
+		</table>
+
+		<img src="/shoes.png" alt="Shoe usage" />
+
+		<h3>Boards</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Board</th>
+					<th>Count</th>
+					<th>Start</th>
+					<th>End</th>
+				</tr>
+			</thead>
+			<tbody id="boards" hx-get="/boards.html" hx-trigger="filters-changed from:body"
+				hx-include="form">
+				{% include "_session_aggregate.html" %}
+			</tbody>
+		</table>
+
+		<img src="/boards.png" alt="Board usage" />
+	</main>
+</body>
+
+</html>
