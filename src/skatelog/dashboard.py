@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from skatelog.cli_util import date_range
+from skatelog.cli_util import date_range, streak
 from skatelog.deps import get_db
 import skatelog.queries as query
 from sqlmodel import Session as DBSession
@@ -88,3 +88,14 @@ def board_rows(
     return _templates.TemplateResponse(
         request, "_session_aggregate.html", {"items": items}
     )
+
+@router.get("/streak.html", response_class=HTMLResponse)
+def streak_rows(
+    db: Annotated[DBSession, Depends(get_db)],
+    year: str | None = None,
+    month: str | None = None,
+) -> Any:
+    start, end = date_range(month, year)
+    sessions = query.find_by_date_range(db, start, end)
+    result = streak(sessions)
+    return f"<tr><td>{result.best}</td></tr>"

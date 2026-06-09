@@ -16,6 +16,7 @@
 			<a href="#locations">Locations</a>
 			<a href="#shoes">Shoes</a>
 			<a href="#boards">Boards</a>
+			<a href="#streak">Streak</a>
 		</nav>
 		<h1>Skatelog</h1>
 		<p>Track your skateboard sessions</p>
@@ -27,7 +28,8 @@
 			hx-on::after-request="htmx.trigger('#disciplines', 'filters-changed')"
 			hx-on::after-request="htmx.trigger('#locations', 'filters-changed')"
 			hx-on::after-request="htmx.trigger('#shoes', 'filters-changed')"
-			hx-on::after-request="htmx.trigger('#boards', 'filters-changed')">
+			hx-on::after-request="htmx.trigger('#boards', 'filters-changed')"
+			hx-on::after-request="htmx.trigger('#streak', 'filters-changed')">
 			<label for="month">Filter by date:</label>
 
 			<select id="month" name="month">
@@ -80,7 +82,6 @@
 				{% include "_session_aggregate_relative.html" %}
 			</tbody>
 		</table>
-
 		<img src="/disciplines.png" alt="Discipline training frequency" />
 
 		<h3>Locations</h3>
@@ -98,7 +99,6 @@
 				{% include "_session_aggregate.html" %}
 			</tbody>
 		</table>
-
 		<img src="/locations.png" alt="Location frequency" />
 
 		<h3>Shoes</h3>
@@ -115,7 +115,6 @@
 				{% include "_session_aggregate.html" %}
 			</tbody>
 		</table>
-
 		<img src="/shoes.png" alt="Shoe usage" />
 
 		<h3>Boards</h3>
@@ -133,8 +132,20 @@
 				{% include "_session_aggregate.html" %}
 			</tbody>
 		</table>
-
 		<img src="/boards.png" alt="Board usage" />
+
+		<h3>Streak</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Best streak</th>
+				</tr>
+			</thead>
+			<tbody id="streak" hx-get="/streak.html" hx-trigger="filters-changed from:body"
+				hx-include="form">
+			</tbody>
+		</table>
+		<img src="/streak.png" alt="Streak by day" />
 	</main>
 </body>
 
