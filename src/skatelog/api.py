@@ -43,8 +43,8 @@ def show_tricks_api(db: Annotated[DBSession, Depends(get_db)],
 
 @app.get("/sessions")
 def list_api(db: Annotated[DBSession, Depends(get_db)],
-             month: str | None = None,
-             year: str | None = None) -> list[Session]:
+             month: int | str | None = None,
+             year: int | str | None = None) -> list[Session]:
     """List sessions."""
     start, end = date_range(month, year)
     sessions = query.find_by_date_range(db, start, end)
@@ -52,8 +52,8 @@ def list_api(db: Annotated[DBSession, Depends(get_db)],
 
 @app.get("/tricks")
 def list_tricks_api(db: Annotated[DBSession, Depends(get_db)],
-                    month: str | None = None,
-                    year: str | None = None,
+                    month: int | str | None = None,
+                    year: int | str | None = None,
                     new: bool = False) -> list[Trick]:
     """List tricks."""
     start, end = date_range(month, year)
@@ -64,8 +64,8 @@ def list_tricks_api(db: Annotated[DBSession, Depends(get_db)],
 @app.get("/disciplines")
 def list_disciplines_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> list[SessionAggregate]:
     """List all disciplines."""
     start, end = date_range(month, year)
@@ -75,8 +75,8 @@ def list_disciplines_api(
 @app.get("/disciplines.png", response_class=Response)
 def plot_disciplines_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Response:
     """Generates plot for discipline training frequency."""
     result = list_disciplines_api(db, month, year)
@@ -88,8 +88,8 @@ def plot_disciplines_api(
 @app.get("/locations")
 def list_locations_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> list[SessionAggregate]:
     """List all locations."""
     start, end = date_range(month, year)
@@ -99,8 +99,8 @@ def list_locations_api(
 @app.get("/locations.png", response_class=Response)
 def plot_locations_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Response:
     """Generates plot for location frequency."""
     result = list_locations_api(db, month, year)
@@ -112,8 +112,8 @@ def plot_locations_api(
 @app.get("/shoes")
 def list_shoes_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> list[SessionAggregate]:
     """List all shoes."""
     start, end = date_range(month, year)
@@ -123,8 +123,8 @@ def list_shoes_api(
 @app.get("/shoes.png", response_class=Response)
 def plot_shoes_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Response:
     """Generates plot for shoe usage."""
     result = list_shoes_api(db, month, year)
@@ -136,8 +136,8 @@ def plot_shoes_api(
 @app.get("/boards")
 def list_boards_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> list[SessionAggregate]:
     """List all boards."""
     start, end = date_range(month, year)
@@ -147,8 +147,8 @@ def list_boards_api(
 @app.get("/boards.png", response_class=Response)
 def plot_boards_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Response:
     """Generates plot for board usage."""
     result = list_boards_api(db, month, year)
@@ -160,8 +160,8 @@ def plot_boards_api(
 @app.get("/streak")
 def streak_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Streak:
     """Finds best streak and lists current streak by day."""
     start, end = date_range(month, year)
@@ -171,8 +171,8 @@ def streak_api(
 @app.get("/streak.png", response_class=Response)
 def plot_streak_api(
     db: Annotated[DBSession, Depends(get_db)],
-    month: str | None = None,
-    year: str | None = None,
+    month: int | str | None = None,
+    year: int | str | None = None,
 ) -> Response:
     """Generates plot for current streak by day."""
     streak_result = streak_api(db, month, year)

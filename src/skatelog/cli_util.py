@@ -65,25 +65,25 @@ def find_disciplines(disciplines: str | None) -> DisciplineResult:
                 result.ambiguous.append(d)
     return result
 
-def _month_range(month: str) -> tuple[date, date]:
-    start = date.strptime(month, "%Y-%m")
+def _month_range(year: int | str, month: int | str) -> tuple[date, date]:
+    start = date.strptime(f"{year}-{month}", "%Y-%m")
     next_year = start.year + (start.month // 12)
     next_month = (start.month % 12) + 1
     end = date(next_year, next_month, start.day)
     return (start, end)
 
-def _year_range(year: str) -> tuple[date, date]:
-    start = date.strptime(year, "%Y")
+def _year_range(year: int | str) -> tuple[date, date]:
+    start = date.strptime(str(year), "%Y")
     end = date(start.year + 1, start.month, start.day)
     return (start, end)
 
-def date_range(month: str | None, year: str | None) -> tuple[date, date]:
-    if month is not None:
-        return _month_range(month)
-    elif year is not None:
+def date_range(month: int | str | None, year: int | str | None) -> tuple[date, date]:
+    if not year:
+        return (date.min, date.max)
+    elif not month:
         return _year_range(year)
     else:
-        return (date.min, date.max)
+        return _month_range(year, month)
 
 def streak(sessions: Iterable[Session]) -> Streak:
     """Finds streaks of skated days from given sessions."""

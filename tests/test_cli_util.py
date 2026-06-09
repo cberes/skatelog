@@ -8,13 +8,20 @@ def test_date_range_returns_min_max_as_default() -> None:
     assert start == date.min
     assert end == date.max
 
-def test_date_range_with_month() -> None:
-    start, end = date_range("2026-04", None)
+def test_date_range_with_month_only_returns_min_max() -> None:
+    start, end = date_range(1, None)
+    assert start == date.min
+    assert end == date.max
+
+@pytest.mark.parametrize("month,year", [(4, 2026), ("4", "2026")])
+def test_date_range_with_month_and_year(month: int | str, year: int | str) -> None:
+    start, end = date_range(month, year)
     assert start == date(2026, 4, 1)
     assert end == date(2026, 5, 1)
 
-def test_date_range_with_year() -> None:
-    start, end = date_range(None, "2026")
+@pytest.mark.parametrize("year", [2026, "2026"])
+def test_date_range_with_year(year: int | str) -> None:
+    start, end = date_range(None, year)
     assert start == date(2026, 1, 1)
     assert end == date(2027, 1, 1)
 

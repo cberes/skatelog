@@ -1,4 +1,3 @@
-from datetime import date
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -11,15 +10,6 @@ from typing import Annotated, Any
 router = APIRouter()
 _templates = Jinja2Templates(directory="src/skatelog/templates")
 
-def _date_range(month: str | None, year: str | None) -> tuple[date, date]:
-    if not year:
-        args = [None, None]
-    elif month:
-        args = [f"{year}-{month}", None]
-    else:
-        args = [None, year]
-    return date_range(*args)
-
 @router.get("/", response_class=HTMLResponse)
 def dashboard(
     request: Request,
@@ -28,7 +18,7 @@ def dashboard(
     month: str | None = None,
 ) -> Any:
     # TODO: does this need to get sessions?
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     sessions = query.find_by_date_range(db, start, end)
     return _templates.TemplateResponse(
         request, "dashboard.html", {"sessions": sessions}
@@ -41,7 +31,7 @@ def session_rows(
     year: str | None = None,
     month: str | None = None,
 ) -> Any:
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     sessions = query.find_by_date_range(db, start, end)
     return _templates.TemplateResponse(
         request, "_session_rows.html", {"sessions": sessions}
@@ -54,7 +44,7 @@ def discipline_rows(
     year: str | None = None,
     month: str | None = None,
 ) -> Any:
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     items = query.find_discipline_counts(db, start, end)
     return _templates.TemplateResponse(
         request, "_session_aggregate_relative.html", {"items": items}
@@ -67,7 +57,7 @@ def location_rows(
     year: str | None = None,
     month: str | None = None,
 ) -> Any:
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     items = query.find_location_counts(db, start, end)
     return _templates.TemplateResponse(
         request, "_session_aggregate.html", {"items": items}
@@ -80,7 +70,7 @@ def shoe_rows(
     year: str | None = None,
     month: str | None = None,
 ) -> Any:
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     items = query.find_shoe_counts(db, start, end)
     return _templates.TemplateResponse(
         request, "_session_aggregate.html", {"items": items}
@@ -93,7 +83,7 @@ def board_rows(
     year: str | None = None,
     month: str | None = None,
 ) -> Any:
-    start, end = _date_range(month, year)
+    start, end = date_range(month, year)
     items = query.find_board_counts(db, start, end)
     return _templates.TemplateResponse(
         request, "_session_aggregate.html", {"items": items}

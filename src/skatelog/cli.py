@@ -176,8 +176,8 @@ def delete_trick_cmd(ctx: typer.Context,
 
 @app.command("list")
 def list_cmd(ctx: typer.Context,
-             month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-             year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None) -> None:
+             month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+             year: Annotated[int | None, typer.Option(help="Filter to Year")] = None) -> None:
     """List sessions."""
     table = Table(title="Sessions")
     table.add_column("Day", justify="right", style="cyan")
@@ -195,8 +195,8 @@ def list_cmd(ctx: typer.Context,
 
 @app.command("list-tricks")
 def list_tricks_cmd(ctx: typer.Context,
-                    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-                    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+                    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+                    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
                     new: Annotated[bool, typer.Option(help="List new tricks only")] = False) -> None:
     """List tricks."""
     start, end = date_range(month, year)
@@ -208,8 +208,8 @@ def list_tricks_cmd(ctx: typer.Context,
 @app.command("list-disciplines")
 def list_disciplines_cmd(
     ctx: typer.Context,
-    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
     plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
 ) -> None:
     """List all disciplines."""
@@ -239,8 +239,8 @@ def list_disciplines_cmd(
 @app.command("list-locations")
 def list_locations_cmd(
     ctx: typer.Context,
-    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
     plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
 ) -> None:
     """List all locations."""
@@ -264,8 +264,8 @@ def list_locations_cmd(
 @app.command("list-shoes")
 def list_shoes_cmd(
     ctx: typer.Context,
-    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
     plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
 ) -> None:
     """List all shoes."""
@@ -289,8 +289,8 @@ def list_shoes_cmd(
 @app.command("list-boards")
 def list_boards_cmd(
     ctx: typer.Context,
-    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
     plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
 ) -> None:
     """List all boards."""
@@ -314,8 +314,8 @@ def list_boards_cmd(
 @app.command("streak")
 def streak_cmd(
     ctx: typer.Context,
-    month: Annotated[str | None, typer.Option(help="Filter to YYYY-MM")] = None,
-    year: Annotated[str | None, typer.Option(help="Filter to YYYY")] = None,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
     plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
 ) -> None:
     """Finds best streak and lists current streak by day."""
