@@ -1,0 +1,9 @@
+{% for t in tricks %}
+<tr>
+	<td>{{ t.day }}</td>
+	<td>{{ t.count }}</td>
+	<td>{{ t.stance }}</td>
+	<td>{{ t.name }}</td>
+	<td>{{ t.surface or "-" }}</td>
+</tr>
+{% endfor %}

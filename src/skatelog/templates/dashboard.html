@@ -17,6 +17,7 @@
 			<a href="#shoes">Shoes</a>
 			<a href="#boards">Boards</a>
 			<a href="#streak">Streak</a>
+			<a href="#new-tricks">New Tricks</a>
 		</nav>
 		<h1>Skatelog</h1>
 		<p>Track your skateboard sessions</p>
@@ -153,6 +154,25 @@
 			</tbody>
 		</table>
 		<img id="streak-chart" src="/streak.png" alt="Streak by day" />
+
+		<h3>New Tricks</h3>
+		<a href="#top">top</a>
+		<table>
+			<thead>
+				<tr>
+					<th>Day</th>
+					<th>Count</th>
+					<th>Stance</th>
+					<th>Name</th>
+					<th>Surface</th>
+				</tr>
+			</thead>
+			<tbody id="new-tricks">
+				{% with tricks=new_tricks %}
+				{% include "_trick_rows.html" %}
+				{% endwith %}
+			</tbody>
+		</table>
 	</main>
 </body>
 

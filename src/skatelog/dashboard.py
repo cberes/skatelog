@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from skatelog.cli_util import date_range, streak
+from skatelog.cli_util import date_range, new_tricks, streak
 from skatelog.deps import get_db
 import skatelog.queries as query
 from sqlmodel import Session as DBSession
@@ -19,6 +19,7 @@ def dashboard(
 ) -> Any:
     start, end = date_range(month, year)
     sessions = list(query.find_by_date_range(db, start, end))
+    tricks = list(query.find_tricks_by_date_range(db, start, end))
     ctx = {
             "request": request,
             "sessions": sessions,
@@ -27,6 +28,7 @@ def dashboard(
             "shoes": query.find_shoe_counts(db, start, end),
             "boards": query.find_board_counts(db, start, end),
             "streak": streak(sessions).best,
+            "new_tricks": list(new_tricks(tricks)),
     }
     return _templates.TemplateResponse(request, "dashboard.html", ctx)
 
@@ -39,6 +41,7 @@ def refresh(
 ) -> Any:
     start, end = date_range(month, year)
     sessions = list(query.find_by_date_range(db, start, end))
+    tricks = list(query.find_tricks_by_date_range(db, start, end))
     ctx = {
             "request": request,
             "year": year,
@@ -49,5 +52,6 @@ def refresh(
             "shoes": query.find_shoe_counts(db, start, end),
             "boards": query.find_board_counts(db, start, end),
             "streak": streak(sessions).best,
+            "new_tricks": list(new_tricks(tricks)),
     }
     return _templates.TemplateResponse(request, "_dashboard_refresh.html", ctx)

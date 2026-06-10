@@ -57,3 +57,12 @@
 </template>
 
 <img id="streak-chart" hx-swap-oob="true" src="/streak.png?year={{ year }}&month={{ month }}" alt="Streak by day" />
+
+<!-- new tricks -->
+<template>
+<tbody id="new-tricks" hx-swap-oob="true">
+	{% with tricks=new_tricks %}
+	{% include "_trick_rows.html" %}
+	{% endwith %}
+</tbody>
+</template>
