@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
@@ -82,16 +82,19 @@ def show_cmd(ctx: typer.Context,
         console.print(_tricks_table(session.tricks))
 
 def _find_recent_locations() -> set[str]:
+    last_year = date.today() - timedelta(days=365)
     with DBSession(get_engine()) as db:
-        return query.find_locations(db)
+        return query.find_locations(db, last_year)
 
 def _find_recent_shoes() -> set[str]:
+    six_months_ago = date.today() - timedelta(days=30*6)
     with DBSession(get_engine()) as db:
-        return query.find_shoes(db)
+        return query.find_shoes(db, six_months_ago)
 
 def _find_recent_boards() -> set[str]:
+    six_months_ago = date.today() - timedelta(days=30*6)
     with DBSession(get_engine()) as db:
-        return query.find_boards(db)
+        return query.find_boards(db, six_months_ago)
 
 def _most_recent_location() -> str:
     with DBSession(get_engine()) as db:

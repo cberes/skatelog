@@ -88,7 +88,7 @@
 			<p>
 				<label for="where">Where</label>
 				<select id="where" name="where">
-					{% with options=locations %}
+					{% with options=locations, selected=location_last %}
 					{% include "_options.html" %}
 					{% endwith %}
 				</select>
@@ -97,7 +97,7 @@
 			<p>
 				<label for="shoe">Shoe</label>
 				<select id="shoe" name="shoe">
-					{% with options=shoes %}
+					{% with options=shoes, selected=shoe_last %}
 					{% include "_options.html" %}
 					{% endwith %}
 				</select>
@@ -106,7 +106,7 @@
 			<p>
 				<label for="board">Board</label>
 				<select id="board" name="board">
-					{% with options=boards %}
+					{% with options=boards, selected=board_last %}
 					{% include "_options.html" %}
 					{% endwith %}
 				</select>
@@ -138,7 +138,7 @@
 				</tr>
 			</thead>
 			<tbody id="disciplines">
-				{% with items=disciplines %}
+				{% with items=discipline_counts %}
 				{% include "_session_aggregate_relative.html" %}
 				{% endwith %}
 			</tbody>
@@ -157,7 +157,7 @@
 				</tr>
 			</thead>
 			<tbody id="locations">
-				{% with items=locations %}
+				{% with items=location_counts %}
 				{% include "_session_aggregate.html" %}
 				{% endwith %}
 			</tbody>
@@ -176,7 +176,7 @@
 				</tr>
 			</thead>
 			<tbody id="shoes">
-				{% with items=shoes %}
+				{% with items=shoe_counts %}
 				{% include "_session_aggregate.html" %}
 				{% endwith %}
 			</tbody>
@@ -195,7 +195,7 @@
 				</tr>
 			</thead>
 			<tbody id="boards">
-				{% with items=boards %}
+				{% with items=board_counts %}
 				{% include "_session_aggregate.html" %}
 				{% endwith %}
 			</tbody>

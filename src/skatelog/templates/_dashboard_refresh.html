@@ -4,7 +4,7 @@
 <!-- disciplines -->
 <template>
 <tbody id="disciplines" hx-swap-oob="true">
-	{% with items=disciplines %}
+	{% with items=discipline_counts %}
 	{% include "_session_aggregate_relative.html" %}
 	{% endwith %}
 </tbody>
@@ -16,7 +16,7 @@
 <!-- locations -->
 <template>
 <tbody id="locations" hx-swap-oob="true">
-	{% with items=locations %}
+	{% with items=location_counts %}
 	{% include "_session_aggregate.html" %}
 	{% endwith %}
 </tbody>
@@ -28,7 +28,7 @@
 <!-- shoes -->
 <template>
 <tbody id="shoes" hx-swap-oob="true">
-	{% with items=shoes %}
+	{% with items=shoe_counts %}
 	{% include "_session_aggregate.html" %}
 	{% endwith %}
 </tbody>
@@ -39,7 +39,7 @@
 <!-- boards -->
 <template>
 <tbody id="boards" hx-swap-oob="true">
-	{% with items=boards %}
+	{% with items=board_counts %}
 	{% include "_session_aggregate.html" %}
 	{% endwith %}
 </tbody>
