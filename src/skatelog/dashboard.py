@@ -26,7 +26,7 @@ def dashboard(
             "locations": query.find_location_counts(db, start, end),
             "shoes": query.find_shoe_counts(db, start, end),
             "boards": query.find_board_counts(db, start, end),
-            "steak": streak(sessions).best,
+            "streak": streak(sessions).best,
     }
     return _templates.TemplateResponse(request, "dashboard.html", ctx)
 
@@ -48,6 +48,6 @@ def refresh(
             "locations": query.find_location_counts(db, start, end),
             "shoes": query.find_shoe_counts(db, start, end),
             "boards": query.find_board_counts(db, start, end),
-            "steak": streak(sessions).best,
+            "streak": streak(sessions).best,
     }
     return _templates.TemplateResponse(request, "_dashboard_refresh.html", ctx)
