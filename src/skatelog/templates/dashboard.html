@@ -36,7 +36,7 @@
 	<main>
 
 		<form hx-get="/refresh" hx-target="#sessions" hx-swap="innerHTML"
-			hx-trigger="change, input delay:500ms">
+			hx-trigger="change, input delay:500ms, htmx:afterRequest from:#add-session">
 			<label for="month">Filter by date:</label>
 
 			<select id="month" name="month">
@@ -78,7 +78,7 @@
 		</table>
 
 		<h3>Add session</h3>
-		<form hx-post="/sessions" hx-swap="none" hx-ext="json-enc"
+		<form id="add-session" hx-post="/sessions" hx-swap="none" hx-ext="json-enc"
 			hx-on::after-request="if(event.detail.successful) this.reset()">
 			<p>
 				<label for="day">Day</label>
