@@ -5,6 +5,16 @@
 	<title>Skatelog</title>
 	<script src="https://unpkg.com/htmx.org@2"></script>
 	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+	<style>
+		tr.htmx-swapping td {
+			opacity: 0;
+			transition: opacity 1s ease-out;
+		}
+
+		td.clickable:hover {
+			cursor: pointer;
+		}
+	</style>
 </head>
 
 <body>
@@ -57,9 +67,11 @@
 					<th>Shoe</th>
 					<th>Board</th>
 					<th>Notes</th>
+					<th>&nbsp;</th>
 				</tr>
 			</thead>
-			<tbody id="sessions">
+			<tbody id="sessions" hx-confirm="Delete this session?" hx-target="closest tr"
+				hx-swap="outerHTML swap:200ms">
 				{% include "_session_rows.html" %}
 			</tbody>
 		</table>

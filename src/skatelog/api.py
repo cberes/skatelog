@@ -195,19 +195,21 @@ def add_session_api(db: Annotated[DBSession, Depends(get_db)],
     query.create_session(db, session)
     return session
 
-@app.delete("/sessions/{day}", status_code=204)
+@app.delete("/sessions/{day}")
 def delete_session_api(db: Annotated[DBSession, Depends(get_db)],
-                       day: str) -> None:
+                       day: str) -> Response:
     """Delete session by day."""
     target = date.fromisoformat(day)
     query.delete_session(db, target)
+    return Response(status_code=200)
 
-@app.delete("/tricks/{id}", status_code=204)
+@app.delete("/tricks/{id}")
 def delete_trick_api(db: Annotated[DBSession, Depends(get_db)],
-                     id: int) -> None:
+                     id: int) -> Response:
     """Delete trick by ID."""
     existing = db.get(Trick, id)
     if existing is not None:
         db.delete(existing)
         db.commit()
+    return Response(status_code=200)
 
