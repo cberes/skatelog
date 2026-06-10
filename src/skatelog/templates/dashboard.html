@@ -4,6 +4,7 @@
 <head>
 	<title>Skatelog</title>
 	<script src="https://unpkg.com/htmx.org@2"></script>
+	<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
 	<style>
 		tr.htmx-swapping td {
@@ -75,6 +76,56 @@
 				{% include "_session_rows.html" %}
 			</tbody>
 		</table>
+
+		<h3>Add session</h3>
+		<form hx-post="/sessions" hx-swap="none" hx-ext="json-enc"
+			hx-on::after-request="if(event.detail.successful) this.reset()">
+			<p>
+				<label for="day">Day</label>
+				<input type="text" id="day" name="day" value="{{ today }}">
+			</p>
+
+			<p>
+				<label for="where">Where</label>
+				<select id="where" name="where">
+					{% with options=locations %}
+					{% include "_options.html" %}
+					{% endwith %}
+				</select>
+			</p>
+
+			<p>
+				<label for="shoe">Shoe</label>
+				<select id="shoe" name="shoe">
+					{% with options=shoes %}
+					{% include "_options.html" %}
+					{% endwith %}
+				</select>
+			</p>
+
+			<p>
+				<label for="board">Board</label>
+				<select id="board" name="board">
+					{% with options=boards %}
+					{% include "_options.html" %}
+					{% endwith %}
+				</select>
+			</p>
+
+			<p>
+				<label for="notes">Notes</label>
+				<input type="text" id="notes" name="notes">
+			</p>
+
+			<p>
+				{% with options=disciplines %}
+				{% include "_checks.html" %}
+				{% endwith %}
+			</p>
+
+			<button>Add</button>
+			<button type="reset">Reset</button>
+		</form>
 
 		<h3>Disciplines</h3>
 		<a href="#top">top</a>

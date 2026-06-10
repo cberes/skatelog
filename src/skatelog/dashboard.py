@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -22,6 +23,7 @@ def dashboard(
     tricks = list(query.find_tricks_by_date_range(db, start, end))
     ctx = {
             "request": request,
+            "today": date.today().isoformat(),
             "sessions": sessions,
             "disciplines": query.find_discipline_counts(db, start, end),
             "locations": query.find_location_counts(db, start, end),
