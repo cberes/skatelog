@@ -1,0 +1,59 @@
+<!-- main content -->
+{% include "_session_rows.html" %}
+
+<!-- disciplines -->
+<template>
+<tbody id="disciplines" hx-swap-oob="true">
+	{% with items=disciplines %}
+	{% include "_session_aggregate_relative.html" %}
+	{% endwith %}
+</tbody>
+</template>
+
+<img id="disciplines-chart" hx-swap-oob="true" src="/disciplines.png?year={{ year }}&month={{ month }}"
+	alt="Discipline training frequency" />
+
+<!-- locations -->
+<template>
+<tbody id="locations" hx-swap-oob="true">
+	{% with items=locations %}
+	{% include "_session_aggregate.html" %}
+	{% endwith %}
+</tbody>
+</template>
+
+<img id="locations-chart" hx-swap-oob="true" src="/locations.png?year={{ year }}&month={{ month }}"
+	alt="Location frequency" />
+
+<!-- shoes -->
+<template>
+<tbody id="shoes" hx-swap-oob="true">
+	{% with items=shoes %}
+	{% include "_session_aggregate.html" %}
+	{% endwith %}
+</tbody>
+</template>
+
+<img id="shoes-chart" hx-swap-oob="true" src="/shoes.png?year={{ year }}&month={{ month }}" alt="Shoe usage" />
+
+<!-- boards -->
+<template>
+<tbody id="boards" hx-swap-oob="true">
+	{% with items=boards %}
+	{% include "_session_aggregate.html" %}
+	{% endwith %}
+</tbody>
+</template>
+
+<img id="boards-chart" hx-swap-oob="true" src="/boards.png?year={{ year }}&month={{ month }}" alt="Board usage" />
+
+<!-- streak -->
+<template>
+<tbody id="streak" hx-swap-oob="true">
+	<tr>
+		<td>{{ streak }}</td>
+	</tr>
+</tbody>
+</template>
+
+<img id="streak-chart" hx-swap-oob="true" src="/streak.png?year={{ year }}&month={{ month }}" alt="Streak by day" />

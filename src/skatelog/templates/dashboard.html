@@ -23,13 +23,8 @@
 	</header>
 	<main>
 
-		<form hx-get="/sessions.html" hx-target="#sessions" hx-swap="innerHTML"
-			hx-trigger="change, input delay:500ms"
-			hx-on::after-request="htmx.trigger('#disciplines', 'filters-changed')"
-			hx-on::after-request="htmx.trigger('#locations', 'filters-changed')"
-			hx-on::after-request="htmx.trigger('#shoes', 'filters-changed')"
-			hx-on::after-request="htmx.trigger('#boards', 'filters-changed')"
-			hx-on::after-request="htmx.trigger('#streak', 'filters-changed')">
+		<form hx-get="/refresh" hx-target="#sessions" hx-swap="innerHTML"
+			hx-trigger="change, input delay:500ms">
 			<label for="month">Filter by date:</label>
 
 			<select id="month" name="month">
@@ -77,12 +72,13 @@
 					<th>Last trained</th>
 				</tr>
 			</thead>
-			<tbody id="disciplines" hx-get="/disciplines.html" hx-trigger="filters-changed from:body"
-				hx-include="form">
+			<tbody id="disciplines">
+				{% with items=disciplines %}
 				{% include "_session_aggregate_relative.html" %}
+				{% endwith %}
 			</tbody>
 		</table>
-		<img src="/disciplines.png" alt="Discipline training frequency" />
+		<img id="disciplines-chart" src="/disciplines.png" alt="Discipline training frequency" />
 
 		<h3>Locations</h3>
 		<table>
@@ -94,12 +90,13 @@
 					<th>End</th>
 				</tr>
 			</thead>
-			<tbody id="locations" hx-get="/locations.html" hx-trigger="filters-changed from:body"
-				hx-include="form">
+			<tbody id="locations">
+				{% with items=locations %}
 				{% include "_session_aggregate.html" %}
+				{% endwith %}
 			</tbody>
 		</table>
-		<img src="/locations.png" alt="Location frequency" />
+		<img id="locations-chart" src="/locations.png" alt="Location frequency" />
 
 		<h3>Shoes</h3>
 		<table>
@@ -111,11 +108,13 @@
 					<th>End</th>
 				</tr>
 			</thead>
-			<tbody id="shoes" hx-get="/shoes.html" hx-trigger="filters-changed from:body" hx-include="form">
+			<tbody id="shoes">
+				{% with items=shoes %}
 				{% include "_session_aggregate.html" %}
+				{% endwith %}
 			</tbody>
 		</table>
-		<img src="/shoes.png" alt="Shoe usage" />
+		<img id="shoes-chart" src="/shoes.png" alt="Shoe usage" />
 
 		<h3>Boards</h3>
 		<table>
@@ -127,12 +126,13 @@
 					<th>End</th>
 				</tr>
 			</thead>
-			<tbody id="boards" hx-get="/boards.html" hx-trigger="filters-changed from:body"
-				hx-include="form">
+			<tbody id="boards">
+				{% with items=boards %}
 				{% include "_session_aggregate.html" %}
+				{% endwith %}
 			</tbody>
 		</table>
-		<img src="/boards.png" alt="Board usage" />
+		<img id="boards-chart" src="/boards.png" alt="Board usage" />
 
 		<h3>Streak</h3>
 		<table>
@@ -141,11 +141,13 @@
 					<th>Best streak</th>
 				</tr>
 			</thead>
-			<tbody id="streak" hx-get="/streak.html" hx-trigger="filters-changed from:body"
-				hx-include="form">
+			<tbody id="streak">
+				<tr>
+					<td>{{ streak }}</td>
+				</tr>
 			</tbody>
 		</table>
-		<img src="/streak.png" alt="Streak by day" />
+		<img id="streak-chart" src="/streak.png" alt="Streak by day" />
 	</main>
 </body>
 
