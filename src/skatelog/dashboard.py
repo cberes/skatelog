@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from skatelog.cli_util import date_range, new_tricks, streak
@@ -13,7 +13,7 @@ router = APIRouter()
 _templates = Jinja2Templates(directory="src/skatelog/templates")
 
 _six_months_ago = date.today() - timedelta(days=30*6)
-_last_year = date.today() - timedelta(days=365)
+_one_year_ago = date.today() - timedelta(days=365)
 
 def _most_recent(sessions: list[Session]) -> list[Session]:
     return sorted(sessions, key=lambda it: it.day, reverse=True)[:10]
@@ -79,7 +79,7 @@ def sessions_page(
             "today": date.today().isoformat(),
             "sessions": sorted(sessions, key=lambda it: it.day, reverse=True),
             "disciplines": [d.value for d in Discipline],
-            "locations": list(query.find_locations(db, _last_year)),
+            "locations": list(query.find_locations(db, _one_year_ago)),
             "shoes": list(query.find_shoes(db, _six_months_ago)),
             "boards": list(query.find_boards(db, _six_months_ago)),
             "location_last": (most_recent_session and most_recent_session.where) or "",
@@ -133,4 +133,23 @@ def refresh_tricks(
             "tricks": sorted(list(tricks), key=lambda it: it.day, reverse=True),
     }
     return _templates.TemplateResponse(request, "_trick_rows.html", ctx)
+
+@router.get("/sessions/{day}", response_class=HTMLResponse)
+def session_page(
+    request: Request,
+    db: Annotated[DBSession, Depends(get_db)],
+    day: str,
+) -> Any:
+    target = date.fromisoformat(day)
+    session = query.find_session(db, target)
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"No session for {day}")
+    tricks = list(session.tricks)
+    ctx = {
+            "request": request,
+            "session": session,
+            "tricks": tricks,
+            "disciplines": [d.value for d in Discipline],
+    }
+    return _templates.TemplateResponse(request, "session.html", ctx)
 

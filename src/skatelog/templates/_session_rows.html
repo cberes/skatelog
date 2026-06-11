@@ -1,6 +1,6 @@
 {% for s in sessions %}
 <tr>
-	<td>{{ s.day }}</td>
+	<td><a href="/sessions/{{ s.day }}">{{ s.day }}</a></td>
 	<td>{{ s.disciplines | map(attribute="value") | join(", ") or "-" }}</td>
 	<td>{{ s.where or "-" }}</td>
 	<td>{{ s.shoe or "-" }}</td>
