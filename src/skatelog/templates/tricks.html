@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Skatelog</title>
+	<script src="https://unpkg.com/htmx.org@2"></script>
+	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+	<style>
+		tr.htmx-swapping td {
+			opacity: 0;
+			transition: opacity 1s ease-out;
+		}
+
+		td.clickable:hover {
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+		<nav id="top">
+			<a href="/">Dashboard</a>
+			<a href="/sessions">Sessions</a>
+			<a href="/tricks" class="current">Tricks</a>
+		</nav>
+		<h1>Skatelog</h1>
+		<p>Track your skateboard sessions</p>
+	</header>
+	<main>
+
+		<h2>Tricks</h2>
+
+		<form hx-get="/refresh-tricks" hx-target="#tricks" hx-swap="innerHTML"
+			hx-trigger="change, input delay:500ms">
+			<label for="month">Filter by date:</label>
+
+			<select id="month" name="month">
+				{% include "_months.html" %}
+			</select>
+
+			<input type="number" id="year" name="year" value="2026">
+		</form>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Day</th>
+					<th>Count</th>
+					<th>Stance</th>
+					<th>Name</th>
+					<th>Surface</th>
+				</tr>
+			</thead>
+			<tbody id="tricks">
+				{% include "_trick_rows.html" %}
+			</tbody>
+		</table>
+	</main>
+</body>
+
+</html>

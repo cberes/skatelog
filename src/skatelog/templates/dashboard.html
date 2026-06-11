@@ -4,7 +4,6 @@
 <head>
 	<title>Skatelog</title>
 	<script src="https://unpkg.com/htmx.org@2"></script>
-	<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
 	<style>
 		tr.htmx-swapping td {
@@ -21,44 +20,29 @@
 <body>
 	<header>
 		<nav id="top">
-			<a href="#top">Home</a>
-			<a href="#sessions">Sessions</a>
-			<a href="#disciplines">Disciplines</a>
-			<a href="#locations">Locations</a>
-			<a href="#shoes">Shoes</a>
-			<a href="#boards">Boards</a>
-			<a href="#streak">Streak</a>
-			<a href="#new-tricks">New Tricks</a>
+			<a href="/" class="current">Dashboard</a>
+			<a href="/sessions">Sessions</a>
+			<a href="/tricks">Tricks</a>
 		</nav>
 		<h1>Skatelog</h1>
 		<p>Track your skateboard sessions</p>
 	</header>
 	<main>
 
+		<h2>Dashboard</h2>
+
 		<form hx-get="/refresh" hx-target="#sessions" hx-swap="innerHTML"
-			hx-trigger="change, input delay:500ms, htmx:afterRequest from:#add-session">
+			hx-trigger="change, input delay:500ms">
 			<label for="month">Filter by date:</label>
 
 			<select id="month" name="month">
-				<option value="" selected>- Month -</option>
-				<option value="01">January</option>
-				<option value="02">February</option>
-				<option value="03">March</option>
-				<option value="04">April</option>
-				<option value="05">May</option>
-				<option value="06">June</option>
-				<option value="07">July</option>
-				<option value="08">August</option>
-				<option value="09">September</option>
-				<option value="10">October</option>
-				<option value="11">November</option>
-				<option value="12">December</option>
+				{% include "_months.html" %}
 			</select>
 
 			<input type="number" id="year" name="year" value="2026">
 		</form>
 
-		<h2>Sessions</h2>
+		<h3>Recent sessions</h3>
 		<table>
 			<thead>
 				<tr>
@@ -76,59 +60,11 @@
 				{% include "_session_rows.html" %}
 			</tbody>
 		</table>
-
-		<h3>Add session</h3>
-		<form id="add-session" hx-post="/sessions" hx-swap="none" hx-ext="json-enc"
-			hx-on::after-request="if(event.detail.successful) this.reset()">
-			<p>
-				<label for="day">Day</label>
-				<input type="text" id="day" name="day" value="{{ today }}">
-			</p>
-
-			<p>
-				<label for="where">Where</label>
-				<select id="where" name="where">
-					{% with options=locations, selected=location_last %}
-					{% include "_options.html" %}
-					{% endwith %}
-				</select>
-			</p>
-
-			<p>
-				<label for="shoe">Shoe</label>
-				<select id="shoe" name="shoe">
-					{% with options=shoes, selected=shoe_last %}
-					{% include "_options.html" %}
-					{% endwith %}
-				</select>
-			</p>
-
-			<p>
-				<label for="board">Board</label>
-				<select id="board" name="board">
-					{% with options=boards, selected=board_last %}
-					{% include "_options.html" %}
-					{% endwith %}
-				</select>
-			</p>
-
-			<p>
-				<label for="notes">Notes</label>
-				<input type="text" id="notes" name="notes">
-			</p>
-
-			<p>
-				{% with options=disciplines %}
-				{% include "_checks.html" %}
-				{% endwith %}
-			</p>
-
-			<button>Add</button>
-			<button type="reset">Reset</button>
-		</form>
+		<p>
+			<a href="/sessions#add-session">Add a session</a>
+		</p>
 
 		<h3>Disciplines</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>
@@ -143,10 +79,9 @@
 				{% endwith %}
 			</tbody>
 		</table>
-		<img id="disciplines-chart" src="/disciplines.png" alt="Discipline training frequency" />
+		<img id="disciplines-chart" src="/api/v1/disciplines.png" alt="Discipline training frequency" />
 
 		<h3>Locations</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>
@@ -162,10 +97,9 @@
 				{% endwith %}
 			</tbody>
 		</table>
-		<img id="locations-chart" src="/locations.png" alt="Location frequency" />
+		<img id="locations-chart" src="/api/v1/locations.png" alt="Location frequency" />
 
 		<h3>Shoes</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>
@@ -181,10 +115,9 @@
 				{% endwith %}
 			</tbody>
 		</table>
-		<img id="shoes-chart" src="/shoes.png" alt="Shoe usage" />
+		<img id="shoes-chart" src="/api/v1/shoes.png" alt="Shoe usage" />
 
 		<h3>Boards</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>
@@ -200,10 +133,9 @@
 				{% endwith %}
 			</tbody>
 		</table>
-		<img id="boards-chart" src="/boards.png" alt="Board usage" />
+		<img id="boards-chart" src="/api/v1/boards.png" alt="Board usage" />
 
 		<h3>Streak</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>
@@ -216,10 +148,9 @@
 				</tr>
 			</tbody>
 		</table>
-		<img id="streak-chart" src="/streak.png" alt="Streak by day" />
+		<img id="streak-chart" src="/api/v1/streak.png" alt="Streak by day" />
 
 		<h3>New Tricks</h3>
-		<a href="#top">top</a>
 		<table>
 			<thead>
 				<tr>

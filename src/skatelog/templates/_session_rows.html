@@ -6,6 +6,6 @@
 	<td>{{ s.shoe or "-" }}</td>
 	<td>{{ s.board or "-" }}</td>
 	<td>{{ s.notes or "-" }}</td>
-	<td hx-delete="/sessions/{{ s.day }}" class="clickable">🗑️</td>
+	<td hx-delete="/api/v1/sessions/{{ s.day }}" class="clickable">🗑️</td>
 </tr>
 {% endfor %}

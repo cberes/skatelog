@@ -9,6 +9,8 @@ from skatelog.api import app
 from skatelog.deps import get_db
 from skatelog.models import Session
 
+_base_url = "/api/v1"
+
 @pytest.fixture
 def db() -> Iterator[DBSession]:
     engine = create_engine(
@@ -32,7 +34,7 @@ def client(db: DBSession) -> Iterator[TestClient]:
     app.dependency_overrides.clear()
 
 def test_show_session_returns_404_when_no_session(db: DBSession, client: TestClient) -> None:
-    assert client.get("sessions/2026-01-01").status_code == 404
+    assert client.get(f"{_base_url}/sessions/2026-01-01").status_code == 404
 
 def test_show_session_returns_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
@@ -40,14 +42,14 @@ def test_show_session_returns_session(db: DBSession, client: TestClient) -> None
     db.add(session)
     db.commit()
 
-    resp = client.get(f"/sessions/{day.isoformat()}")
+    resp = client.get(f"{_base_url}/sessions/{day.isoformat()}")
     assert resp.status_code == 200
     body = resp.json()
     assert body["where"] == "Skatepark"
 
 def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
-    resp = client.post("/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True})
+    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True})
 
     assert resp.status_code == 201
     body = resp.json()
@@ -58,7 +60,7 @@ def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> 
 
 def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
-    resp = client.post("/sessions", json={"day": day.isoformat()})
+    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat()})
 
     assert resp.status_code == 400
     body = resp.json()
