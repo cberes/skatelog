@@ -5,6 +5,7 @@ A CLI for tracking skateboarding sessions
 ## Features
 
 - [FastAPI](https://fastapi.tiangolo.com/) API
+- [htmx](https://htmx.org/) dashboard
 - [Typer](https://typer.tiangolo.com/) CLI
 - Text formatting with [rich](https://rich.readthedocs.io/en/latest/)
 - Generates plots with [matplotlib](https://matplotlib.org/)
@@ -49,7 +50,7 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 - `uv run skatelog delete-trick 100` deletes the trick with the specified ID
 - `uv run skatelog streak` finds streaks of days skated
 
-### API
+### API and dashboard
 
 `uv run fastapi dev` or `uv run fastapi run`
 
