@@ -5,5 +5,8 @@
 	<td>{{ t.stance }}</td>
 	<td>{{ t.name }}</td>
 	<td>{{ t.surface or "-" }}</td>
+	{% if editable %}
+	<td hx-delete="/api/v1/tricks/{{ t.id }}" class="clickable">🗑️</td>
+	{% endif %}
 </tr>
 {% endfor %}
