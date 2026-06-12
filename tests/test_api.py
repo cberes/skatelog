@@ -3,11 +3,11 @@ from datetime import date
 from fastapi.testclient import TestClient
 import pytest
 from sqlmodel import Session as DBSession
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import SQLModel, col, create_engine, select
 from sqlmodel.pool import StaticPool
 from skatelog.api import app
 from skatelog.deps import get_db
-from skatelog.models import Session
+from skatelog.models import Discipline, Session, Stance, Trick
 
 _base_url = "/api/v1"
 
@@ -33,7 +33,7 @@ def client(db: DBSession) -> Iterator[TestClient]:
         yield c
     app.dependency_overrides.clear()
 
-def test_show_session_returns_404_when_no_session(db: DBSession, client: TestClient) -> None:
+def test_show_session_returns_404_when_no_session(client: TestClient) -> None:
     assert client.get(f"{_base_url}/sessions/2026-01-01").status_code == 404
 
 def test_show_session_returns_session(db: DBSession, client: TestClient) -> None:
@@ -67,44 +67,63 @@ def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestCli
     assert body["detail"] == "Bad session"
     assert db.get(Session, day) is None
 
-# def test_create_session_persists_new_tricks(db: DBSession) -> None:
-#     day = date(2026, 1, 1)
-#     session = _session_skatepark(day)
-#     tricks = [Trick(day=session.day, name="kickflip")]
-#     session.tricks = tricks.copy()
-#     q.create_session(db, session)
-#     found = db.get(Session, day)
-#     assert found is session
-#     found_tricks = db.exec(select(Trick).where(Trick.day == session.day)).all()
-#     assert found_tricks == tricks
-#
-# def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
-#     day = date(2026, 1, 1)
-#     session1 = _session_skatepark(day)
-#     db.add(session1)
-#     db.commit()
-#     session2 = _session_tennis_court(day)
-#     q.create_session(db, session2)
-#     found = db.get(Session, day)
-#     assert found is not None
-#     assert found.day == day
-#     assert found.disciplines == {Discipline.BOWL}
-#
-# def test_create_session_deletes_duplicate_tricks(db: DBSession) -> None:
-#     day = date(2026, 1, 1)
-#     session1 = _session_skatepark(day)
-#     session1.tricks = [Trick(day=session1.day, name="kickflip")]
-#     db.add(session1)
-#     db.commit()
-#     session2 = _session_tennis_court(day)
-#     tricks = [Trick(day=day, name="heelflip")]
-#     session2.tricks = tricks.copy()
-#     q.create_session(db, session2)
-#     found = db.get(Session, day)
-#     assert found is session2
-#     found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
-#     assert found_tricks == tricks
-#
+def test_add_session_persists_new_tricks(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    notes = "kickflip, 3 switch noseslides"
+    tricks = [Trick(day=day, name="kickflip"), Trick(day=day, stance=Stance.SWITCH, name="noseslide", count=3)]
+    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True, "notes": notes})
+
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["day"] == day.isoformat()
+    assert body["where"] == "Skatepark"
+    assert body["a_frame"]
+    assert "tricks" not in body
+    session = db.get(Session, day)
+    assert session is not None
+    sorted_tricks = sorted(session.tricks, key=lambda it: it.count)
+    for i in range(len(tricks)):
+        tricks[i].id = sorted_tricks[i].id
+    assert sorted_tricks == tricks
+
+    found_tricks = db.exec(select(Trick).where(Trick.day == session.day).order_by(col(Trick.count))).all()
+    assert found_tricks == tricks
+
+def test_add_session_deletes_duplicate_session(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    session1 = _session_skatepark(day)
+    db.add(session1)
+    db.commit()
+    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Tennis Court", "bowl": True})
+
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["day"] == day.isoformat()
+    assert body["where"] == "Tennis Court"
+    assert body["bowl"]
+
+    found = db.get(Session, day)
+    assert found is not None
+    assert found.day == day
+    assert found.disciplines == {Discipline.BOWL}
+
+def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    session1 = _session_skatepark(day)
+    session1.tricks = [Trick(day=session1.day, name="kickflip")]
+    db.add(session1)
+    db.commit()
+    tricks = [Trick(day=day, name="heelflip")]
+    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Tennis Court", "bowl": True, "notes": "heelflip"})
+
+    assert resp.status_code == 201
+    found = db.get(Session, day)
+    assert found is not None
+    assert found.where == "Tennis Court"
+    found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
+    tricks[0].id = found_tricks[0].id
+    assert found_tricks == tricks
+
 # def test_delete_session(db: DBSession) -> None:
 #     day = date(2026, 1, 1)
 #     session = _session_skatepark(day)
