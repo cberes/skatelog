@@ -49,11 +49,7 @@
 
 <!-- streak -->
 <template>
-<tbody id="streak" hx-swap-oob="true">
-	<tr>
-		<td>{{ streak }}</td>
-	</tr>
-</tbody>
+<td id="streak" hx-swap-oob="true">{{ streak }}</td>
 </template>
 
 <img id="streak-chart" hx-swap-oob="true" src="/streak.png?year={{ year }}&month={{ month }}" alt="Streak by day" />
