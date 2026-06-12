@@ -1,3 +1,5 @@
+name: build
+
 on:
   push:
     branches:
@@ -31,8 +33,15 @@ jobs:
         run: uv run ruff check .
 
       - name: Run tests
-        run: uv run py.test
+        run: uv run py.test --junit-xml=test-report.xml
 
       - name: Build project
         run: uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: test-report.xml
 
