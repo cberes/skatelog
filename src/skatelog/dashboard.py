@@ -1,14 +1,19 @@
+from collections.abc import Iterable
 from datetime import date, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from io import BytesIO
+import matplotlib
 from skatelog.cli_util import date_range, new_tricks, streak
 from skatelog.deps import get_db
-from skatelog.models import Session, Discipline
+from skatelog.models import Discipline, Session
+from skatelog.plots import bar, line, PlotConfig
 import skatelog.queries as query
 from sqlmodel import Session as DBSession
 from typing import Annotated, Any
 
+matplotlib.use("Agg")
 router = APIRouter()
 _templates = Jinja2Templates(directory="src/skatelog/templates")
 
@@ -17,6 +22,10 @@ _one_year_ago = date.today() - timedelta(days=365)
 
 def _most_recent(sessions: list[Session]) -> list[Session]:
     return sorted(sessions, key=lambda it: it.day, reverse=True)[:10]
+
+def _to_plot_data(results: Iterable[query.SessionAggregate]) -> list[tuple[str, int]]:
+    sorted_results = sorted(list(results), key=lambda it: it.count, reverse=True)
+    return [(result.key, result.count) for result in sorted_results]
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard_page(
@@ -152,4 +161,75 @@ def session_page(
             "disciplines": [d.value for d in Discipline],
     }
     return _templates.TemplateResponse(request, "session.html", ctx)
+
+@router.get("/disciplines.png", response_class=Response)
+def plot_disciplines_api(
+    db: Annotated[DBSession, Depends(get_db)],
+    month: int | str | None = None,
+    year: int | str | None = None,
+) -> Response:
+    """Generates plot for discipline training frequency."""
+    start, end = date_range(month, year)
+    result = query.find_discipline_counts(db, start, end)
+    buf = BytesIO()
+    config = PlotConfig(title="Discipline training frequency", label_x="Discipline", label_y="Sessions (days)", buf=buf)
+    bar([d for d in _to_plot_data(result) if d[1] != 0], config)
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.get("/locations.png", response_class=Response)
+def plot_locations_api(
+    db: Annotated[DBSession, Depends(get_db)],
+    month: int | str | None = None,
+    year: int | str | None = None,
+) -> Response:
+    """Generates plot for location frequency."""
+    start, end = date_range(month, year)
+    result = query.find_location_counts(db, start, end)
+    buf = BytesIO()
+    config = PlotConfig(title="Location frequency", label_x="Location", label_y="Sessions (days)", buf=buf)
+    bar(_to_plot_data(result), config)
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.get("/shoes.png", response_class=Response)
+def plot_shoes_api(
+    db: Annotated[DBSession, Depends(get_db)],
+    month: int | str | None = None,
+    year: int | str | None = None,
+) -> Response:
+    """Generates plot for shoe usage."""
+    start, end = date_range(month, year)
+    result = query.find_shoe_counts(db, start, end)
+    buf = BytesIO()
+    config = PlotConfig(title="Shoe frequency", label_x="Shoe", label_y="Sessions (days)", buf=buf)
+    bar(_to_plot_data(result), config)
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.get("/boards.png", response_class=Response)
+def plot_boards_api(
+    db: Annotated[DBSession, Depends(get_db)],
+    month: int | str | None = None,
+    year: int | str | None = None,
+) -> Response:
+    """Generates plot for board usage."""
+    start, end = date_range(month, year)
+    result = query.find_board_counts(db, start, end)
+    buf = BytesIO()
+    config = PlotConfig(title="Board frequency", label_x="Board", label_y="Sessions (days)", buf=buf)
+    bar(_to_plot_data(result), config)
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.get("/streak.png", response_class=Response)
+def plot_streak_api(
+    db: Annotated[DBSession, Depends(get_db)],
+    month: int | str | None = None,
+    year: int | str | None = None,
+) -> Response:
+    """Generates plot for current streak by day."""
+    start, end = date_range(month, year)
+    sessions = query.find_by_date_range(db, start, end)
+    result = streak(sessions)
+    buf = BytesIO()
+    config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", buf=buf)
+    line(result.to_plot_data(), config)
+    return Response(content=buf.getvalue(), media_type="image/png")
 
