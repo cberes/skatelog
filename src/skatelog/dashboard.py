@@ -163,7 +163,7 @@ def session_page(
     return _templates.TemplateResponse(request, "session.html", ctx)
 
 @router.get("/disciplines.png", response_class=Response)
-def plot_disciplines_api(
+def plot_disciplines(
     db: Annotated[DBSession, Depends(get_db)],
     month: int | str | None = None,
     year: int | str | None = None,
@@ -177,7 +177,7 @@ def plot_disciplines_api(
     return Response(content=buf.getvalue(), media_type="image/png")
 
 @router.get("/locations.png", response_class=Response)
-def plot_locations_api(
+def plot_locations(
     db: Annotated[DBSession, Depends(get_db)],
     month: int | str | None = None,
     year: int | str | None = None,
@@ -191,7 +191,7 @@ def plot_locations_api(
     return Response(content=buf.getvalue(), media_type="image/png")
 
 @router.get("/shoes.png", response_class=Response)
-def plot_shoes_api(
+def plot_shoes(
     db: Annotated[DBSession, Depends(get_db)],
     month: int | str | None = None,
     year: int | str | None = None,
@@ -205,7 +205,7 @@ def plot_shoes_api(
     return Response(content=buf.getvalue(), media_type="image/png")
 
 @router.get("/boards.png", response_class=Response)
-def plot_boards_api(
+def plot_boards(
     db: Annotated[DBSession, Depends(get_db)],
     month: int | str | None = None,
     year: int | str | None = None,
@@ -219,7 +219,7 @@ def plot_boards_api(
     return Response(content=buf.getvalue(), media_type="image/png")
 
 @router.get("/streak.png", response_class=Response)
-def plot_streak_api(
+def plot_streak(
     db: Annotated[DBSession, Depends(get_db)],
     month: int | str | None = None,
     year: int | str | None = None,
