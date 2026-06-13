@@ -95,14 +95,13 @@ def sessions_page(
         "today": date.today().isoformat(),
         "sessions": sorted(sessions, key=lambda it: it.day, reverse=True),
         "disciplines": [d.value for d in Discipline],
-        "locations": list(query.find_locations(db, _one_year_ago)),
-        "shoes": list(query.find_shoes(db, _six_months_ago)),
-        "boards": list(query.find_boards(db, _six_months_ago)),
+        "locations": sorted(list(query.find_locations(db, _one_year_ago))),
+        "shoes": sorted(list(query.find_shoes(db, _six_months_ago))),
+        "boards": sorted(list(query.find_boards(db, _six_months_ago))),
         "location_last": (most_recent_session and most_recent_session.where) or "",
         "shoe_last": (most_recent_session and most_recent_session.shoe) or "",
         "board_last": (most_recent_session and most_recent_session.board) or "",
     }
-    [ctx[it].sort() for it in ("locations", "shoes", "boards")]
     return _templates.TemplateResponse(request, "sessions.html", ctx)
 
 

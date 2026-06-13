@@ -26,8 +26,14 @@ jobs:
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
+      - name: Run ty
+        run: uv check
+
       - name: Run pyright
         run: uv run pyright
+
+      - name: Check formatting
+        run: uv run ruff format --check .
 
       - name: Run pre-commit (lint and format)
         run: uv run pre-commit run --all-files

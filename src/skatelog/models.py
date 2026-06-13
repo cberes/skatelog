@@ -88,25 +88,21 @@ class Trick(SQLModel, table=True):
         matches = _TRICK_PATTERN.finditer(value)
         for match in matches:
             groups = {k: v for k, v in match.groupdict().items() if v}
-            kwargs = {}
             name = cls._singularize(match.group("name"))
             parsed = 0
-            if "count" in groups:
-                kwargs["count"] = int(groups["count"])
-            if "stance" in groups:
-                kwargs["stance"] = Stance(groups["stance"])
-            if "surface" in groups:
-                kwargs["surface"] = cls._clean_surface(groups["surface"])
+            count = int(groups["count"]) if "count" in groups else 1
+            stance = Stance(groups["stance"]) if "stance" in groups else Stance.REGULAR
+            surface = cls._clean_surface(groups["surface"]) if "surface" in groups else None
             if "comment" in groups:
-                for count, stance in cls._parse_trick_comment(groups["comment"]):
-                    kwargs["count"] = count
-                    kwargs["stance"] = stance
-                    t = Trick(day=day, name=name, **kwargs)
+                for c, s in cls._parse_trick_comment(groups["comment"]):
+                    count = c
+                    stance = s
+                    t = Trick(day=day, name=name, stance=stance, surface=surface, count=count)
                     t._special_cases()
                     yield t
                     parsed += 1
             if parsed == 0:
-                t = Trick(day=day, name=name, **kwargs)
+                t = Trick(day=day, name=name, stance=stance, surface=surface, count=count)
                 t._special_cases()
                 yield t
 
@@ -138,7 +134,7 @@ class Discipline(StrEnum):
 
 class Session(SQLModel, table=True):
     # This seems to fix deserialization, where day is deserialized to a str instead of date
-    model_config = {"validate_assignment": True}
+    model_config = {"validate_assignment": True}  # ty: ignore[invalid-assignment]
 
     day: date = Field(primary_key=True)
 
