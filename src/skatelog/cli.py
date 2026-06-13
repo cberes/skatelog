@@ -19,30 +19,38 @@ from skatelog.plots import PlotConfig, bar, line
 app = typer.Typer(help="Skateboarding session log.")
 console = Console()
 
+
 @app.callback()
 def main(ctx: typer.Context) -> None:
     db = DBSession(get_engine())
     ctx.obj = db
     ctx.call_on_close(lambda: db.close())
 
+
 def _get_db(ctx: typer.Context) -> DBSession:
     return ctx.obj
 
+
 @app.command("import")
-def import_cmd(ctx: typer.Context,
-               csv_path: Annotated[Path, typer.Argument(exists=True, readable=True, dir_okay=False)]) -> None:
+def import_cmd(
+    ctx: typer.Context,
+    csv_path: Annotated[Path, typer.Argument(exists=True, readable=True, dir_okay=False)],
+) -> None:
     """Imports sessions from a CSV file."""
     db = _get_db(ctx)
     n = import_csv(csv_path, db)
     console.print(f"[green]Imported {n} sessions[/green]")
 
+
 @app.command("export")
-def export_cmd(ctx: typer.Context,
-               csv_path: Annotated[Path, typer.Argument(writable=True, dir_okay=False)]) -> None:
+def export_cmd(
+    ctx: typer.Context, csv_path: Annotated[Path, typer.Argument(writable=True, dir_okay=False)]
+) -> None:
     """Exports sessions to a CSV file."""
     db = _get_db(ctx)
     n = export_csv(csv_path, db)
     console.print(f"[green]Exported {n} sessions[/green]")
+
 
 def _session_table(session: Session) -> Table:
     table = Table(title=str(session.day), show_header=False)
@@ -53,6 +61,7 @@ def _session_table(session: Session) -> Table:
     table.add_row("Board", session.board or "-")
     table.add_row("Notes", session.notes or "-")
     return table
+
 
 def _tricks_table(tricks: Iterable[Trick], include_day: bool = False) -> Table:
     table = Table(title="Tricks")
@@ -70,9 +79,11 @@ def _tricks_table(tricks: Iterable[Trick], include_day: bool = False) -> Table:
         table.add_row(*cols)
     return table
 
+
 @app.command("show")
-def show_cmd(ctx: typer.Context,
-             day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
+def show_cmd(
+    ctx: typer.Context, day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]
+) -> None:
     """Show a day's session."""
     target = date.fromisoformat(day)
     db = _get_db(ctx)
@@ -84,47 +95,65 @@ def show_cmd(ctx: typer.Context,
     if session.tricks:
         console.print(_tricks_table(session.tricks))
 
+
 def _find_recent_locations() -> set[str]:
     last_year = date.today() - timedelta(days=365)
     with DBSession(get_engine()) as db:
         return query.find_locations(db, last_year)
 
+
 def _find_recent_shoes() -> set[str]:
-    six_months_ago = date.today() - timedelta(days=30*6)
+    six_months_ago = date.today() - timedelta(days=30 * 6)
     with DBSession(get_engine()) as db:
         return query.find_shoes(db, six_months_ago)
 
+
 def _find_recent_boards() -> set[str]:
-    six_months_ago = date.today() - timedelta(days=30*6)
+    six_months_ago = date.today() - timedelta(days=30 * 6)
     with DBSession(get_engine()) as db:
         return query.find_boards(db, six_months_ago)
+
 
 def _most_recent_location() -> str:
     with DBSession(get_engine()) as db:
         session = query.find_most_recent_session(db)
         return (session is not None and session.where) or ""
 
+
 def _most_recent_shoe() -> str:
     with DBSession(get_engine()) as db:
         session = query.find_most_recent_session(db)
         return (session is not None and session.shoe) or ""
+
 
 def _most_recent_board() -> str:
     with DBSession(get_engine()) as db:
         session = query.find_most_recent_session(db)
         return (session is not None and session.board) or ""
 
+
 def _none_if_dash(s: str | None) -> str | None:
     return None if s == "-" else s
 
+
 @app.command("add")
-def add_cmd(ctx: typer.Context,
-            day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-DD")] = str(date.today()),
-            where: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_locations)] = _most_recent_location(),
-            shoe: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_shoes)] = _most_recent_shoe(),
-            board: Annotated[str, typer.Option(prompt=True, autocompletion=_find_recent_boards)] = _most_recent_board(),
-            disciplines: Annotated[str | None, typer.Option(prompt=True, help="Disciplines trained as CSV")] = "-",
-            notes: Annotated[str | None, typer.Option(prompt=True)] = "-") -> None:
+def add_cmd(
+    ctx: typer.Context,
+    day: Annotated[str, typer.Option(prompt=True, help="Date as YYYY-MM-DD")] = str(date.today()),
+    where: Annotated[
+        str, typer.Option(prompt=True, autocompletion=_find_recent_locations)
+    ] = _most_recent_location(),
+    shoe: Annotated[
+        str, typer.Option(prompt=True, autocompletion=_find_recent_shoes)
+    ] = _most_recent_shoe(),
+    board: Annotated[
+        str, typer.Option(prompt=True, autocompletion=_find_recent_boards)
+    ] = _most_recent_board(),
+    disciplines: Annotated[
+        str | None, typer.Option(prompt=True, help="Disciplines trained as CSV")
+    ] = "-",
+    notes: Annotated[str | None, typer.Option(prompt=True)] = "-",
+) -> None:
     """Interactively log a session."""
     # The spreasdsheet has select inputs, so I can easily pick the right options
     # I'd like to do a prompt with multiple choices and an OTHER option that adds a new value
@@ -134,7 +163,11 @@ def add_cmd(ctx: typer.Context,
     where_result = find_by_startswith(where, query.find_locations(db))
     shoe_result = find_by_startswith(shoe, query.find_shoes(db))
     board_result = find_by_startswith(board, query.find_boards(db))
-    for category, result in (("location", where_result), ("shoe", shoe_result), ("board", board_result)):
+    for category, result in (
+        ("location", where_result),
+        ("shoe", shoe_result),
+        ("board", board_result),
+    ):
         if result.new:
             console.print(f"[yellow]Adding new {category}: {result.found}[/yellow]")
     for k, values in [("ambiguous", disc_result.ambiguous), ("unknown", disc_result.unknown)]:
@@ -159,18 +192,22 @@ def add_cmd(ctx: typer.Context,
     console.print(f"[green]Saving session for {session.day}[/green]")
     console.print(_session_table(session))
 
+
 @app.command("delete")
-def delete_cmd(ctx: typer.Context,
-               day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]) -> None:
+def delete_cmd(
+    ctx: typer.Context, day: Annotated[str, typer.Argument(help="Date as YYYY-MM-DD")]
+) -> None:
     """Delete session by day."""
     target = date.fromisoformat(day)
     db = _get_db(ctx)
     if not query.delete_session(db, target):
         console.print(f"[red]No session for {day}[/red]")
 
+
 @app.command("delete-trick")
-def delete_trick_cmd(ctx: typer.Context,
-                     id: Annotated[int, typer.Argument(help="Trick ID")]) -> None:
+def delete_trick_cmd(
+    ctx: typer.Context, id: Annotated[int, typer.Argument(help="Trick ID")]
+) -> None:
     """Delete trick by ID."""
     db = _get_db(ctx)
     existing = db.get(Trick, id)
@@ -180,10 +217,13 @@ def delete_trick_cmd(ctx: typer.Context,
     else:
         console.print(f"[red]No trick with ID {id}[/red]")
 
+
 @app.command("list")
-def list_cmd(ctx: typer.Context,
-             month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
-             year: Annotated[int | None, typer.Option(help="Filter to Year")] = None) -> None:
+def list_cmd(
+    ctx: typer.Context,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
+) -> None:
     """List sessions."""
     table = Table(title="Sessions")
     table.add_column("Day", justify="right", style="cyan")
@@ -196,14 +236,24 @@ def list_cmd(ctx: typer.Context,
     start, end = date_range(month, year)
     db = _get_db(ctx)
     for session in query.find_by_date_range(db, start, end):
-        table.add_row(session.day.isoformat(), session.where or "-", session.shoe or "-", session.board or "-", str(session.trick_count), session.notes or "-")
+        table.add_row(
+            session.day.isoformat(),
+            session.where or "-",
+            session.shoe or "-",
+            session.board or "-",
+            str(session.trick_count),
+            session.notes or "-",
+        )
     console.print(table)
 
+
 @app.command("list-tricks")
-def list_tricks_cmd(ctx: typer.Context,
-                    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
-                    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-                    new: Annotated[bool, typer.Option(help="List new tricks only")] = False) -> None:
+def list_tricks_cmd(
+    ctx: typer.Context,
+    month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
+    year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
+    new: Annotated[bool, typer.Option(help="List new tricks only")] = False,
+) -> None:
     """List tricks."""
     start, end = date_range(month, year)
     db = _get_db(ctx)
@@ -211,12 +261,15 @@ def list_tricks_cmd(ctx: typer.Context,
     tricks = new_tricks(tricks) if new else tricks
     console.print(_tricks_table(tricks, include_day=True))
 
+
 @app.command("list-disciplines")
 def list_disciplines_cmd(
     ctx: typer.Context,
     month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
     year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+    plot_path: Annotated[
+        Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)
+    ] = None,
 ) -> None:
     """List all disciplines."""
     table = Table(title="Disciplines")
@@ -239,15 +292,23 @@ def list_disciplines_cmd(
         plot_data.append((row.key, row.count))
     console.print(table)
     if plot_path is not None:
-        config = PlotConfig(title="Discipline training frequency", label_x="Discipline", label_y="Sessions (days)", output_path=plot_path)
+        config = PlotConfig(
+            title="Discipline training frequency",
+            label_x="Discipline",
+            label_y="Sessions (days)",
+            output_path=plot_path,
+        )
         bar([d for d in plot_data if d[1] != 0], config)
+
 
 @app.command("list-locations")
 def list_locations_cmd(
     ctx: typer.Context,
     month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
     year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+    plot_path: Annotated[
+        Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)
+    ] = None,
 ) -> None:
     """List all locations."""
     table = Table(title="Locations")
@@ -264,15 +325,23 @@ def list_locations_cmd(
         plot_data.append((row.key, row.count))
     console.print(table)
     if plot_path is not None:
-        config = PlotConfig(title="Location frequency", label_x="Location", label_y="Sessions (days)", output_path=plot_path)
+        config = PlotConfig(
+            title="Location frequency",
+            label_x="Location",
+            label_y="Sessions (days)",
+            output_path=plot_path,
+        )
         bar(plot_data, config)
+
 
 @app.command("list-shoes")
 def list_shoes_cmd(
     ctx: typer.Context,
     month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
     year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+    plot_path: Annotated[
+        Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)
+    ] = None,
 ) -> None:
     """List all shoes."""
     table = Table(title="Shoes")
@@ -289,15 +358,20 @@ def list_shoes_cmd(
         plot_data.append((row.key, row.count))
     console.print(table)
     if plot_path is not None:
-        config = PlotConfig(title="Shoe frequency", label_x="Shoe", label_y="Sessions (days)", output_path=plot_path)
+        config = PlotConfig(
+            title="Shoe frequency", label_x="Shoe", label_y="Sessions (days)", output_path=plot_path
+        )
         bar(plot_data, config)
+
 
 @app.command("list-boards")
 def list_boards_cmd(
     ctx: typer.Context,
     month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
     year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+    plot_path: Annotated[
+        Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)
+    ] = None,
 ) -> None:
     """List all boards."""
     table = Table(title="Boards")
@@ -314,15 +388,23 @@ def list_boards_cmd(
         plot_data.append((row.key, row.count))
     console.print(table)
     if plot_path is not None:
-        config = PlotConfig(title="Board frequency", label_x="Board", label_y="Sessions (days)", output_path=plot_path)
+        config = PlotConfig(
+            title="Board frequency",
+            label_x="Board",
+            label_y="Sessions (days)",
+            output_path=plot_path,
+        )
         bar(plot_data, config)
+
 
 @app.command("streak")
 def streak_cmd(
     ctx: typer.Context,
     month: Annotated[int | None, typer.Option(help="Filter to Month (1-based index)")] = None,
     year: Annotated[int | None, typer.Option(help="Filter to Year")] = None,
-    plot_path: Annotated[Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)] = None,
+    plot_path: Annotated[
+        Path | None, typer.Option(help="Output path for plot", writable=True, dir_okay=False)
+    ] = None,
 ) -> None:
     """Finds best streak and lists current streak by day."""
     table = Table(title="Streak")
@@ -338,8 +420,11 @@ def streak_cmd(
     console.print(table)
     console.print(f"[green]Best streak is {best} day{'' if best == 1 else 's'}[/green]")
     if plot_path is not None:
-        config = PlotConfig(title="Streak by day", label_x="Day", label_y="Streak (days)", output_path=plot_path)
+        config = PlotConfig(
+            title="Streak by day", label_x="Day", label_y="Streak (days)", output_path=plot_path
+        )
         line(streak_result.to_plot_data(), config)
+
 
 if __name__ == "__main__":
     app()

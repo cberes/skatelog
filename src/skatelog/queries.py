@@ -14,6 +14,7 @@ def find_session(db: DBSession, target: date) -> Session | None:
     """Show a day's session."""
     return db.get(Session, target)
 
+
 @dataclass
 class SessionAggregate:
     key: str
@@ -30,31 +31,52 @@ class SessionAggregate:
     def from_tuple(cls, t: tuple[Any, int, date, date]) -> SessionAggregate:
         return SessionAggregate(str(t[0]), t[1], t[2], t[3])
 
-def _find_values(db: DBSession, column: Any, start: date | None, end: date | None) -> Iterator[SessionAggregate]:
+
+def _find_values(
+    db: DBSession, column: Any, start: date | None, end: date | None
+) -> Iterator[SessionAggregate]:
     statement = (
-        select(column, func.count(col(Session.day)), func.min(col(Session.day)), func.max(col(Session.day)))
-        .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max)) # noqa: E711
+        select(
+            column,
+            func.count(col(Session.day)),
+            func.min(col(Session.day)),
+            func.max(col(Session.day)),
+        )
+        .where(column != None, Session.day >= (start or date.min), Session.day < (end or date.max))  # noqa: E711
         .group_by(column)
     )
     return (SessionAggregate.from_tuple(it) for it in db.exec(statement))
 
-def find_location_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
+
+def find_location_counts(
+    db: DBSession, start: date | None = None, end: date | None = None
+) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.where, start, end)
 
-def find_shoe_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
+
+def find_shoe_counts(
+    db: DBSession, start: date | None = None, end: date | None = None
+) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.shoe, start, end)
 
-def find_board_counts(db: DBSession, start: date | None = None, end: date | None = None) -> Iterator[SessionAggregate]:
+
+def find_board_counts(
+    db: DBSession, start: date | None = None, end: date | None = None
+) -> Iterator[SessionAggregate]:
     return _find_values(db, Session.board, start, end)
+
 
 def find_locations(db: DBSession, start: date | None = None) -> set[str]:
     return set(it.key for it in find_location_counts(db, start))
 
+
 def find_shoes(db: DBSession, start: date | None = None) -> set[str]:
     return set(it.key for it in find_shoe_counts(db, start))
 
+
 def find_boards(db: DBSession, start: date | None = None) -> set[str]:
     return set(it.key for it in find_board_counts(db, start))
+
 
 def _delete_by_day(db: DBSession, day: date) -> bool:
     existing = db.get(Session, day)
@@ -64,41 +86,47 @@ def _delete_by_day(db: DBSession, day: date) -> bool:
         db.flush()
     return exists
 
+
 def find_most_recent_session(db: DBSession) -> Session | None:
     statement = (
-            select(Session)
-                .where(Session.where != None, Session.shoe != None, Session.board != None) # noqa: E711
-                .order_by(col(Session.day).desc())
-                .limit(1)
+        select(Session)
+        .where(Session.where != None, Session.shoe != None, Session.board != None)  # noqa: E711
+        .order_by(col(Session.day).desc())
+        .limit(1)
     )
     return db.exec(statement).first()
+
 
 def create_session(db: DBSession, session: Session) -> None:
     _delete_by_day(db, session.day)
     db.add(session)
     db.commit()
-    db.refresh(session) # otherwise add-session API returns {} because of expire_on_commit
+    db.refresh(session)  # otherwise add-session API returns {} because of expire_on_commit
+
 
 def delete_session(db: DBSession, target: date) -> bool:
     deleted = _delete_by_day(db, target)
     db.commit()
     return deleted
 
+
 def find_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Session]:
-    statement = select(Session).where(Session.day >= start, Session.day < end) \
-        .order_by(col(Session.day))
+    statement = (
+        select(Session).where(Session.day >= start, Session.day < end).order_by(col(Session.day))
+    )
     sessions = db.exec(statement)
-    for session in sessions:
-        yield session
+    yield from sessions
+
 
 def find_tricks_by_date_range(db: DBSession, start: date, end: date) -> Iterator[Trick]:
-    statement = select(Trick).where(Trick.day >= start, Trick.day < end) \
-        .order_by(col(Trick.day))
+    statement = select(Trick).where(Trick.day >= start, Trick.day < end).order_by(col(Trick.day))
     tricks = db.exec(statement)
-    for trick in tricks:
-        yield trick
+    yield from tricks
 
-def find_discipline_counts(db: DBSession, start: date | None = None, end: date | None = None) -> list[SessionAggregate]:
+
+def find_discipline_counts(
+    db: DBSession, start: date | None = None, end: date | None = None
+) -> list[SessionAggregate]:
     aggs = {d: SessionAggregate(str(d), 0, date.max, date.max) for d in Discipline}
     for session in find_by_date_range(db, start or date.min, end or date.max):
         for d in session.disciplines:

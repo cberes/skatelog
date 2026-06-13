@@ -2,13 +2,12 @@ import csv
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
-from typing import TypeAlias
 
 from sqlmodel import Session as DBSession
 
 from skatelog.models import Session
 
-CsvRow: TypeAlias = dict[str, str | None]
+type CsvRow = dict[str, str | None]
 
 _DISCIPLINE_COLUMNS: dict[str, str] = {
     "a": "a_frame",
@@ -25,17 +24,21 @@ _DISCIPLINE_COLUMNS: dict[str, str] = {
     "vert": "vert",
 }
 
+
 def _to_bool(row: CsvRow, key: str) -> bool:
-    return (row.get(key) or "").strip().lower() == 'true'
+    return (row.get(key) or "").strip().lower() == "true"
+
 
 def _to_date(row: CsvRow, key: str) -> date:
     return date.fromisoformat((row.get(key) or "").strip())
+
 
 def _to_str(row: CsvRow, key: str) -> str | None:
     value = row.get(key)
     if value is None:
         return None
     return value.strip() or None
+
 
 def parse_rows(csv_path: Path) -> Iterator[Session]:
     with csv_path.open(newline="") as csv_file:

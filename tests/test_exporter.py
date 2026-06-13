@@ -12,6 +12,7 @@ from skatelog.models import Session
 FIXTURE_CSV_EMPTY = Path(__file__).parent / "fixtures" / "export_empty.csv"
 FIXTURE_CSV_NON_EMPTY = Path(__file__).parent / "fixtures" / "export_expected.csv"
 
+
 @pytest.fixture
 def db() -> Iterator[DBSession]:
     engine = create_engine("sqlite:///:memory:")
@@ -20,11 +21,13 @@ def db() -> Iterator[DBSession]:
         yield session
     SQLModel.metadata.drop_all(engine)
 
+
 def test_export_csv_with_empty_db(db: DBSession, tmp_path: Path) -> None:
     csv_path = tmp_path / "empty.csv"
     exported = export_csv(csv_path, db)
     assert exported == 0
     assert list(csv_path.open()) == list(FIXTURE_CSV_EMPTY.open())
+
 
 def test_export_csv_with_sessions(db: DBSession, tmp_path: Path) -> None:
     day1, day2, day3, day4 = (date(2026, 1, i + 1) for i in range(4))
@@ -41,6 +44,7 @@ def test_export_csv_with_sessions(db: DBSession, tmp_path: Path) -> None:
     assert exported == len(sessions)
     assert list(csv_path.open()) == list(FIXTURE_CSV_NON_EMPTY.open())
 
+
 def _session_skatepark(day: date) -> Session:
     return Session(
         day=day,
@@ -51,6 +55,7 @@ def _session_skatepark(day: date) -> Session:
         a_frame=True,
         hip=True,
     )
+
 
 def _session_tennis_court(day: date) -> Session:
     return Session(
@@ -64,6 +69,7 @@ def _session_tennis_court(day: date) -> Session:
         transition=True,
     )
 
+
 def _session_streets(day: date) -> Session:
     return Session(
         day=day,
@@ -74,6 +80,6 @@ def _session_streets(day: date) -> Session:
         flat=True,
     )
 
+
 def _session_notes_only(day: date, notes: str) -> Session:
     return Session(day=day, notes=notes)
-

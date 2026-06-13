@@ -1,14 +1,13 @@
 import csv
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TypeAlias
 
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
 
 from skatelog.models import Discipline, Session
 
-CsvRow: TypeAlias = dict[str, str | None]
+type CsvRow = dict[str, str | None]
 
 _DISCIPLINE_COLUMNS: list[tuple[Discipline, str]] = [
     (Discipline.A_FRAME, "A"),
@@ -25,6 +24,7 @@ _DISCIPLINE_COLUMNS: list[tuple[Discipline, str]] = [
     (Discipline.VERT, "Vert"),
 ]
 
+
 def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> int:
     count = 0
     discipline_names = [it[1] for it in _DISCIPLINE_COLUMNS]
@@ -37,6 +37,7 @@ def _write_rows(csv_path: Path, rows: Iterable[CsvRow]) -> int:
             count += 1
     return count
 
+
 def _to_row(session: Session) -> CsvRow:
     disciplines = session.disciplines
     disc_args = {v: "TRUE" if k in disciplines else "FALSE" for k, v in _DISCIPLINE_COLUMNS}
@@ -48,6 +49,7 @@ def _to_row(session: Session) -> CsvRow:
         "Notes": session.notes,
         **disc_args,
     }
+
 
 def export_csv(csv_path: Path, db: DBSession) -> int:
     statement = select(Session).order_by(col(Session.day))

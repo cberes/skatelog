@@ -10,16 +10,19 @@ class OptionResult:
     found: str | None
     new: bool = False
 
+
 @dataclass
 class DisciplineResult:
     found: dict[str, bool]
     ambiguous: list[str]
     unknown: list[str]
 
+
 @dataclass
 class StreakDay:
     day: date
     streak: int
+
 
 @dataclass
 class Streak:
@@ -28,6 +31,7 @@ class Streak:
 
     def to_plot_data(self) -> list[tuple[date, int]]:
         return [(d.day, d.streak) for d in self.days]
+
 
 _DISCIPLINE_ATTRS = [
     "a_frame",
@@ -44,6 +48,7 @@ _DISCIPLINE_ATTRS = [
     "vert",
 ]
 
+
 def find_by_startswith(value: str, options: Iterable[str]) -> OptionResult:
     if (value or "-") == "-":
         return OptionResult(None)
@@ -52,12 +57,15 @@ def find_by_startswith(value: str, options: Iterable[str]) -> OptionResult:
     except StopIteration:
         return OptionResult(value, new=True)
 
+
 def find_disciplines(disciplines: str | None) -> DisciplineResult:
     result = DisciplineResult({}, [], [])
     for d in (disciplines or "").split(","):
         if not d or d.isspace():
             continue
-        matches = {attr: True for attr in _DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())}
+        matches = {
+            attr: True for attr in _DISCIPLINE_ATTRS if attr.lower().startswith(d.strip().lower())
+        }
         match len(matches):
             case 0:
                 result.unknown.append(d)
@@ -67,6 +75,7 @@ def find_disciplines(disciplines: str | None) -> DisciplineResult:
                 result.ambiguous.append(d)
     return result
 
+
 def _month_range(year: int | str, month: int | str) -> tuple[date, date]:
     start = date.strptime(f"{year}-{month}", "%Y-%m")
     next_year = start.year + (start.month // 12)
@@ -74,10 +83,12 @@ def _month_range(year: int | str, month: int | str) -> tuple[date, date]:
     end = date(next_year, next_month, start.day)
     return (start, end)
 
+
 def _year_range(year: int | str) -> tuple[date, date]:
     start = date.strptime(str(year), "%Y")
     end = date(start.year + 1, start.month, start.day)
     return (start, end)
+
 
 def date_range(month: int | str | None, year: int | str | None) -> tuple[date, date]:
     if not year:
@@ -86,6 +97,7 @@ def date_range(month: int | str | None, year: int | str | None) -> tuple[date, d
         return _year_range(year)
     else:
         return _month_range(year, month)
+
 
 def streak(sessions: Iterable[Session]) -> Streak:
     """Finds streaks of skated days from given sessions."""
@@ -107,8 +119,10 @@ def streak(sessions: Iterable[Session]) -> Streak:
         best_streak = max(best_streak, current_streak)
     return Streak(best_streak, days)
 
+
 def new_tricks(tricks: Iterable[Trick]) -> Iterator[Trick]:
-    """Finds only new tricks from the incoming list, which is assumed to be sorted chronlogically."""
+    """Finds only new tricks from the incoming list.
+    Tricks are assumed to be sorted chronlogically."""
     # keep a list with surface and without
     # if surface is present, the trick is new if there's not an entry with the same surface
     # if surface is empty, the trick is new if there's no entry both with and without a surface
@@ -126,4 +140,3 @@ def new_tricks(tricks: Iterable[Trick]) -> Iterator[Trick]:
         elif trick_key_no_surface not in abd_no_surface:
             abd_no_surface.add(trick_key_no_surface)
             yield trick
-

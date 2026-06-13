@@ -6,22 +6,33 @@ from typing import Self
 
 from sqlmodel import Field, Relationship, SQLModel
 
-# TODO: ideally I'd want this to be more flexible, but IDK how to handle that without listing every possible abbreviation
+# TODO: ideally I'd want this to be more flexible,
+# but IDK how to handle that without listing every possible abbreviation
 _STANCE_REGEX = "regular|switch|fakie|nollie|reg|regs|sw|fakey|nol"
 
-_TRICK_PATTERN = re.compile((
+_TRICK_PATTERN = re.compile(
+    (
         r"(?:^|,)\s*"
         r"(?P<count>\d*)\s*"
-        r"(?P<stance>(?:" f"{_STANCE_REGEX}" r")(?=\s+))?\s*"
+        r"(?P<stance>(?:"
+        f"{_STANCE_REGEX}"
+        r")(?=\s+))?\s*"
         r"(?P<name>[^,()]+?)\s*"
-        r"(?P<comment>\([^()]+\))?\s*" # TODO: hmm I want to allow commas and nested parentheses, but I don't want this capturing too much
+        # TODO: hmm I want to allow commas and nested parentheses,
+        # but I don't want this capturing too much
         r"(?P<surface>(?:\s+(?:at|in|on|over)\s+)[^,()]+)?\s*"
+        r"(?P<comment>\([^()]+\))?\s*"
         r"(?=$|,)"
-), re.IGNORECASE)
+    ),
+    re.IGNORECASE,
+)
 
-_TRICK_COMMENT_PATTERN = re.compile(r"(?:^|,)\s*(\d+)\s+(" f"{_STANCE_REGEX}" r")\s*(?=$|,)", re.IGNORECASE)
+_TRICK_COMMENT_PATTERN = re.compile(
+    r"(?:^|,)\s*(\d+)\s+(" f"{_STANCE_REGEX}" r")\s*(?=$|,)", re.IGNORECASE
+)
 
 _ON_THE_PATTERN = re.compile(r"^\s*(at|in|on|over)\s+((a|the)\s+)?", re.IGNORECASE)
+
 
 class Stance(StrEnum):
     REGULAR = auto()
@@ -38,6 +49,7 @@ class Stance(StrEnum):
             if member.value[0:1] == value[0:1]:
                 return member
         return None
+
 
 class Trick(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)

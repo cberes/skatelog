@@ -17,8 +17,10 @@ def db() -> Iterator[DBSession]:
         yield session
     SQLModel.metadata.drop_all(engine)
 
+
 def test_find_session_returns_none_when_no_session(db: DBSession) -> None:
     assert q.find_session(db, date(2026, 1, 1)) is None
+
 
 def test_find_session_returns_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
@@ -30,6 +32,7 @@ def test_find_session_returns_session(db: DBSession) -> None:
     assert found.day == day
     assert found.disciplines == {Discipline.A_FRAME}
 
+
 def test_create_session_persists_new_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
     session = _session_skatepark(day)
@@ -38,6 +41,7 @@ def test_create_session_persists_new_session(db: DBSession) -> None:
     assert found is not None
     assert found.day == day
     assert found.disciplines == {Discipline.A_FRAME}
+
 
 def test_create_session_persists_new_tricks(db: DBSession) -> None:
     day = date(2026, 1, 1)
@@ -50,6 +54,7 @@ def test_create_session_persists_new_tricks(db: DBSession) -> None:
     found_tricks = db.exec(select(Trick).where(Trick.day == session.day)).all()
     assert found_tricks == tricks
 
+
 def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
     session1 = _session_skatepark(day)
@@ -61,6 +66,7 @@ def test_create_session_deletes_duplicate_session(db: DBSession) -> None:
     assert found is not None
     assert found.day == day
     assert found.disciplines == {Discipline.BOWL}
+
 
 def test_create_session_deletes_duplicate_tricks(db: DBSession) -> None:
     day = date(2026, 1, 1)
@@ -77,6 +83,7 @@ def test_create_session_deletes_duplicate_tricks(db: DBSession) -> None:
     found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
     assert found_tricks == tricks
 
+
 def test_delete_session(db: DBSession) -> None:
     day = date(2026, 1, 1)
     session = _session_skatepark(day)
@@ -86,8 +93,10 @@ def test_delete_session(db: DBSession) -> None:
     assert q.delete_session(db, day)
     assert db.get(Session, day) is None
 
+
 def test_delete_session_returns_false_when_not_found(db: DBSession) -> None:
     assert not q.delete_session(db, date(2026, 1, 1))
+
 
 def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
     day1, day2, day3 = (date(2026, 1, i + 1) for i in range(3))
@@ -99,6 +108,7 @@ def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
     most_recent = q.find_most_recent_session(db)
     assert most_recent == session3
 
+
 def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
     day1, day2 = (date(2026, 1, i + 1) for i in range(2))
     session1 = _session_skatepark(day1)
@@ -108,6 +118,7 @@ def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
     most_recent = q.find_most_recent_session(db)
     assert most_recent == session1
 
+
 def test_find_by_date_range(db: DBSession) -> None:
     days = [date(2026, 1, i + 1) for i in range(10)]
     sessions = [_session_skatepark(d) for d in days]
@@ -116,6 +127,7 @@ def test_find_by_date_range(db: DBSession) -> None:
     found = q.find_by_date_range(db, days[1], days[9])
     assert list(found) == sessions[1:9]
 
+
 def test_find_tricks_by_date_range(db: DBSession) -> None:
     days = [date(2026, 1, i + 1) for i in range(10)]
     tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
@@ -123,6 +135,7 @@ def test_find_tricks_by_date_range(db: DBSession) -> None:
     db.commit()
     found = q.find_tricks_by_date_range(db, days[1], days[9])
     assert list(found) == tricks[1:9]
+
 
 class TestCountByDateRange:
     @pytest.fixture(autouse=True)
@@ -272,6 +285,7 @@ class TestCountByDateRange:
         assert aggs[2].end == self.days[14]
         assert aggs[2].days_since == aggs[0].days_since - 5
 
+
 def _session_skatepark(day: date) -> Session:
     return Session(
         day=day,
@@ -282,6 +296,7 @@ def _session_skatepark(day: date) -> Session:
         a_frame=True,
     )
 
+
 def _session_tennis_court(day: date) -> Session:
     return Session(
         day=day,
@@ -291,6 +306,7 @@ def _session_tennis_court(day: date) -> Session:
         notes="heelflip",
         bowl=True,
     )
+
 
 def _session_empty(day: date) -> Session:
     return Session(day=day)

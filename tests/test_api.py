@@ -13,6 +13,7 @@ from skatelog.models import Discipline, Session, Stance, Trick
 
 _base_url = "/api/v1"
 
+
 @pytest.fixture
 def db() -> Iterator[DBSession]:
     engine = create_engine(
@@ -25,6 +26,7 @@ def db() -> Iterator[DBSession]:
         yield session
     SQLModel.metadata.drop_all(engine)
 
+
 @pytest.fixture
 def client(db: DBSession) -> Iterator[TestClient]:
     def override_get_db() -> Iterator[DBSession]:
@@ -35,8 +37,10 @@ def client(db: DBSession) -> Iterator[TestClient]:
         yield c
     app.dependency_overrides.clear()
 
+
 def test_show_session_returns_404_when_no_session(client: TestClient) -> None:
     assert client.get(f"{_base_url}/sessions/2026-01-01").status_code == 404
+
 
 def test_show_session_returns_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
@@ -48,6 +52,7 @@ def test_show_session_returns_session(db: DBSession, client: TestClient) -> None
     assert resp.status_code == 200
     body = resp.json()
     assert body["where"] == "Skatepark"
+
 
 def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
@@ -61,6 +66,7 @@ def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> 
     assert body["a_frame"]
     assert db.get(Session, day) is not None
 
+
 def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
     resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat()})
@@ -69,6 +75,7 @@ def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestCli
     body = resp.json()
     assert body["detail"] == "Bad session"
     assert db.get(Session, day) is None
+
 
 def test_add_session_persists_new_tricks(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
@@ -97,6 +104,7 @@ def test_add_session_persists_new_tricks(db: DBSession, client: TestClient) -> N
     found_tricks = db.exec(stmt).all()
     assert found_tricks == tricks
 
+
 def test_add_session_deletes_duplicate_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
     session1 = _session_skatepark(day)
@@ -116,6 +124,7 @@ def test_add_session_deletes_duplicate_session(db: DBSession, client: TestClient
     assert found.day == day
     assert found.disciplines == {Discipline.BOWL}
 
+
 def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
     session1 = _session_skatepark(day)
@@ -133,6 +142,7 @@ def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient)
     found_tricks = db.exec(select(Trick).where(Trick.day == day)).all()
     tricks[0].id = found_tricks[0].id
     assert found_tricks == tricks
+
 
 # def test_delete_session(db: DBSession) -> None:
 #     day = date(2026, 1, 1)
@@ -329,6 +339,7 @@ def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient)
 #         assert aggs[2].end == self.days[14]
 #         assert aggs[2].days_since == aggs[0].days_since - 5
 
+
 def _session_skatepark(day: date) -> Session:
     return Session(
         day=day,
@@ -338,6 +349,7 @@ def _session_skatepark(day: date) -> Session:
         notes="kickflip",
         a_frame=True,
     )
+
 
 # def _session_tennis_court(day: date) -> Session:
 #     return Session(
