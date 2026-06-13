@@ -51,7 +51,8 @@ def test_show_session_returns_session(db: DBSession, client: TestClient) -> None
 
 def test_add_session_persists_new_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
-    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True})
+    json = {"day": day.isoformat(), "where": "Skatepark", "a_frame": True}
+    resp = client.post(f"{_base_url}/sessions", json=json)
 
     assert resp.status_code == 201
     body = resp.json()
@@ -72,8 +73,12 @@ def test_add_session_returns_400_when_bad_session(db: DBSession, client: TestCli
 def test_add_session_persists_new_tricks(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
     notes = "kickflip, 3 switch noseslides"
-    tricks = [Trick(day=day, name="kickflip"), Trick(day=day, stance=Stance.SWITCH, name="noseslide", count=3)]
-    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Skatepark", "a_frame": True, "notes": notes})
+    tricks = [
+        Trick(day=day, name="kickflip"),
+        Trick(day=day, stance=Stance.SWITCH, name="noseslide", count=3),
+    ]
+    json = {"day": day.isoformat(), "where": "Skatepark", "a_frame": True, "notes": notes}
+    resp = client.post(f"{_base_url}/sessions", json=json)
 
     assert resp.status_code == 201
     body = resp.json()
@@ -88,7 +93,8 @@ def test_add_session_persists_new_tricks(db: DBSession, client: TestClient) -> N
         tricks[i].id = sorted_tricks[i].id
     assert sorted_tricks == tricks
 
-    found_tricks = db.exec(select(Trick).where(Trick.day == session.day).order_by(col(Trick.count))).all()
+    stmt = select(Trick).where(Trick.day == session.day).order_by(col(Trick.count))
+    found_tricks = db.exec(stmt).all()
     assert found_tricks == tricks
 
 def test_add_session_deletes_duplicate_session(db: DBSession, client: TestClient) -> None:
@@ -96,7 +102,8 @@ def test_add_session_deletes_duplicate_session(db: DBSession, client: TestClient
     session1 = _session_skatepark(day)
     db.add(session1)
     db.commit()
-    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Tennis Court", "bowl": True})
+    json = {"day": day.isoformat(), "where": "Tennis Court", "bowl": True}
+    resp = client.post(f"{_base_url}/sessions", json=json)
 
     assert resp.status_code == 201
     body = resp.json()
@@ -116,7 +123,8 @@ def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient)
     db.add(session1)
     db.commit()
     tricks = [Trick(day=day, name="heelflip")]
-    resp = client.post(f"{_base_url}/sessions", json={"day": day.isoformat(), "where": "Tennis Court", "bowl": True, "notes": "heelflip"})
+    json = {"day": day.isoformat(), "where": "Tennis Court", "bowl": True, "notes": "heelflip"}
+    resp = client.post(f"{_base_url}/sessions", json=json)
 
     assert resp.status_code == 201
     found = db.get(Session, day)

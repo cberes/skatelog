@@ -64,8 +64,9 @@ def test_find_by_startswith_with_unknown_inputs() -> None:
 
 @pytest.mark.parametrize("test_input", ["  a  ,Ba, H, rA,t ", "a,ba,h,ra,t"])
 def test_find_disciplines_with_valid_disciplines(test_input: str) -> None:
+    expected = {"a_frame": True, "bank": True, "hip": True, "rail": True, "transition": True}
     result = find_disciplines("  a  ,Ba, H, rA,t ")
-    assert result.found == {"a_frame": True, "bank": True, "hip": True, "rail": True, "transition": True}
+    assert result.found == expected
     assert result.ambiguous == []
     assert result.unknown == []
 

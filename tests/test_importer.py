@@ -45,7 +45,9 @@ def test_parse_real_session_normalizes_fields() -> None:
 
 def test_parse_real_session_parses_tricks() -> None:
     s = _by_date(FIXTURE)["2026-01-04"]
-    assert sorted(s.tricks, key=lambda it: it.stance) == [Trick(day=s.day, name="blunt nose grab", stance=stance, count=3) for stance in (Stance.REGULAR, Stance.SWITCH)]
+    tricks = [Trick(day=s.day, name="blunt nose grab", stance=stance, count=3)
+        for stance in (Stance.REGULAR, Stance.SWITCH)]
+    assert sorted(s.tricks, key=lambda it: it.stance) == tricks
     assert s.trick_count == 6
 
 def test_parse_empty_notes_become_none() -> None:
@@ -66,4 +68,6 @@ def test_import_csv_saves_tricks(db: DBSession) -> None:
     tricks = db.exec(select(Trick).where(Trick.day == day)).all()
     for t in tricks:
         t.id = None
-    assert sorted(tricks, key=lambda it: it.stance) == [Trick(day=day, name="blunt nose grab", stance=stance, count=3) for stance in (Stance.REGULAR, Stance.SWITCH)]
+    tricks = [Trick(day=day, name="blunt nose grab", stance=stance, count=3)
+        for stance in (Stance.REGULAR, Stance.SWITCH)]
+    assert sorted(tricks, key=lambda it: it.stance) == tricks
