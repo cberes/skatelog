@@ -56,9 +56,12 @@ and [neovim](https://neovim.io/), so I'm using those tools as well.
 
 ## Development
 
+Initial setup: `make init`
+
 - Run pyright: `uv run pyright`
 - Run tests: `uv run py.test`
-- Run ruff: `uv run ruff check .`
+- Run lint: `uv run ruff check .`
+- Format: `uv run ruff format .`
 
 _OR_
 

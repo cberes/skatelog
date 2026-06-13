@@ -29,8 +29,8 @@ jobs:
       - name: Run pyright
         run: uv run pyright
 
-      - name: Run linter
-        run: uv run ruff check .
+      - name: Run pre-commit (link and format)
+        run: uv run pre-commit run --all-files
 
       - name: Run tests
         run: uv run py.test --junit-xml=test-report.xml
@@ -44,4 +44,3 @@ jobs:
         with:
           name: test-results
           path: test-report.xml
-
