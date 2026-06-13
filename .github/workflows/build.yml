@@ -27,7 +27,7 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Run ty
-        run: uv check
+        run: uv check --preview-features check-command
 
       - name: Run pyright
         run: uv run pyright
