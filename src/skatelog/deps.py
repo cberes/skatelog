@@ -1,5 +1,7 @@
 from collections.abc import Iterator
+
 from sqlmodel import Session as DBSession
+
 from skatelog.db import get_engine
 
 

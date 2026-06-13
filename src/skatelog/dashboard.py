@@ -1,17 +1,19 @@
 from collections.abc import Iterable
 from datetime import date, timedelta
+from io import BytesIO
+from typing import Annotated, Any
+
+import matplotlib
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from io import BytesIO
-import matplotlib
+from sqlmodel import Session as DBSession
+
+import skatelog.queries as query
 from skatelog.cli_util import date_range, new_tricks, streak
 from skatelog.deps import get_db
 from skatelog.models import Discipline, Session
-from skatelog.plots import bar, line, PlotConfig
-import skatelog.queries as query
-from sqlmodel import Session as DBSession
-from typing import Annotated, Any
+from skatelog.plots import PlotConfig, bar, line
 
 matplotlib.use("Agg")
 router = APIRouter()

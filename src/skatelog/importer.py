@@ -2,9 +2,11 @@ import csv
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
-from sqlmodel import Session as DBSession
-from skatelog.models import Session
 from typing import TypeAlias
+
+from sqlmodel import Session as DBSession
+
+from skatelog.models import Session
 
 CsvRow: TypeAlias = dict[str, str | None]
 

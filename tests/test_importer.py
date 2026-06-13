@@ -1,9 +1,11 @@
 from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
+
 import pytest
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine, select
+
 from skatelog.importer import import_csv, parse_rows
 from skatelog.models import Discipline, Session, Stance, Trick
 

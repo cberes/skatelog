@@ -1,10 +1,12 @@
 import csv
 from collections.abc import Iterable
 from pathlib import Path
+from typing import TypeAlias
+
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
+
 from skatelog.models import Discipline, Session
-from typing import TypeAlias
 
 CsvRow: TypeAlias = dict[str, str | None]
 

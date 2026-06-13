@@ -1,10 +1,12 @@
 from collections.abc import Iterator
 from datetime import date
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, col, create_engine, select
 from sqlmodel.pool import StaticPool
+
 from skatelog.api import app
 from skatelog.deps import get_db
 from skatelog.models import Discipline, Session, Stance, Trick

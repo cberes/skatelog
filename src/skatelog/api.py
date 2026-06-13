@@ -1,12 +1,14 @@
 from datetime import date
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response
 from sqlmodel import Session as DBSession
-from skatelog.cli_util import date_range, new_tricks, streak, Streak
+
+import skatelog.queries as query
+from skatelog.cli_util import Streak, date_range, new_tricks, streak
 from skatelog.dashboard import router as dashboard_router
 from skatelog.deps import get_db
 from skatelog.models import Session, Trick
-import skatelog.queries as query
-from typing import Annotated
 
 app = FastAPI()
 api = APIRouter(prefix="/api/v1")

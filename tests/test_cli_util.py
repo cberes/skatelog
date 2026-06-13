@@ -1,7 +1,18 @@
 from datetime import date
+
 import pytest
-from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak, Streak, StreakDay
+
+from skatelog.cli_util import (
+    Streak,
+    StreakDay,
+    date_range,
+    find_by_startswith,
+    find_disciplines,
+    new_tricks,
+    streak,
+)
 from skatelog.models import Session, Stance, Trick
+
 
 def test_date_range_returns_min_max_as_default() -> None:
     start, end = date_range(None, None)

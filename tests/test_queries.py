@@ -1,10 +1,13 @@
 from collections.abc import Iterator
 from datetime import date
+
 import pytest
 from sqlmodel import Session as DBSession
 from sqlmodel import SQLModel, create_engine, select
-from skatelog.models import Discipline, Session, Trick
+
 import skatelog.queries as q
+from skatelog.models import Discipline, Session, Trick
+
 
 @pytest.fixture
 def db() -> Iterator[DBSession]:

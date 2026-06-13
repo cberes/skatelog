@@ -1,9 +1,10 @@
+import re
 from collections.abc import Iterator
 from datetime import date
-from enum import auto, StrEnum
-import re
-from sqlmodel import Field, Relationship, SQLModel
+from enum import StrEnum, auto
 from typing import Self
+
+from sqlmodel import Field, Relationship, SQLModel
 
 # TODO: ideally I'd want this to be more flexible, but IDK how to handle that without listing every possible abbreviation
 _STANCE_REGEX = "regular|switch|fakie|nollie|reg|regs|sw|fakey|nol"

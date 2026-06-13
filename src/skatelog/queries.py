@@ -1,11 +1,14 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
+
 from sqlalchemy import func
 from sqlmodel import Session as DBSession
 from sqlmodel import col, select
+
 from skatelog.models import Discipline, Session, Trick
-from typing import Any
+
 
 def find_session(db: DBSession, target: date) -> Session | None:
     """Show a day's session."""

@@ -1,17 +1,20 @@
+from collections.abc import Iterable
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Annotated
+
+import typer
 from rich.console import Console
 from rich.table import Table
 from sqlmodel import Session as DBSession
+
+import skatelog.queries as query
 from skatelog.cli_util import date_range, find_by_startswith, find_disciplines, new_tricks, streak
 from skatelog.db import get_engine
 from skatelog.exporter import export_csv
 from skatelog.importer import import_csv
 from skatelog.models import Session, Trick
-from skatelog.plots import bar, line, PlotConfig
-import skatelog.queries as query
-import typer
-from typing import Annotated, Iterable
+from skatelog.plots import PlotConfig, bar, line
 
 app = typer.Typer(help="Skateboarding session log.")
 console = Console()

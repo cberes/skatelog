@@ -1,9 +1,12 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from io import BytesIO
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
+
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+
 
 @dataclass
 class PlotConfig:

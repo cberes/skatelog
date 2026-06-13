@@ -1,5 +1,7 @@
 from datetime import date
+
 import pytest
+
 from skatelog.models import Session, Stance, Trick
 
 DAY = date(2026, 1, 1)

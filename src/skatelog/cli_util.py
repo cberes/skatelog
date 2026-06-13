@@ -1,7 +1,9 @@
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import date, timedelta
+
 from skatelog.models import Session, Stance, Trick
-from typing import Iterable, Iterator
+
 
 @dataclass
 class OptionResult:
