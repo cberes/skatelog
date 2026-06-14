@@ -36,6 +36,10 @@ dev = [
 [tool.fastapi]
 entrypoint = "skatelog:api_main"
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
 [tool.ruff]
 line-length = 100
 

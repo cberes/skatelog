@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -38,11 +38,11 @@ def client(db: DBSession) -> Iterator[TestClient]:
     app.dependency_overrides.clear()
 
 
-def test_show_session_returns_404_when_no_session(client: TestClient) -> None:
+def test_get_session_returns_404_when_no_session(client: TestClient) -> None:
     assert client.get(f"{_base_url}/sessions/2026-01-01").status_code == 404
 
 
-def test_show_session_returns_session(db: DBSession, client: TestClient) -> None:
+def test_get_session_returns_session(db: DBSession, client: TestClient) -> None:
     day = date(2026, 1, 1)
     session = _session_skatepark(day)
     db.add(session)
@@ -144,53 +144,85 @@ def test_add_session_deletes_duplicate_tricks(db: DBSession, client: TestClient)
     assert found_tricks == tricks
 
 
-# def test_delete_session(db: DBSession) -> None:
-#     day = date(2026, 1, 1)
-#     session = _session_skatepark(day)
-#     db.add(session)
-#     db.commit()
-#     assert db.get(Session, day) is not None
-#     assert q.delete_session(db, day)
-#     assert db.get(Session, day) is None
-#
-# def test_delete_session_returns_false_when_not_found(db: DBSession) -> None:
-#     assert not q.delete_session(db, date(2026, 1, 1))
-#
-# def test_find_most_recent_session_returns_most_recent(db: DBSession) -> None:
-#     day1, day2, day3 = (date(2026, 1, i + 1) for i in range(3))
-#     session1 = _session_skatepark(day1)
-#     session2 = _session_skatepark(day2)
-#     session3 = _session_tennis_court(day3)
-#     db.add_all([session1, session3, session2])
-#     db.commit()
-#     most_recent = q.find_most_recent_session(db)
-#     assert most_recent == session3
-#
-# def test_find_most_recent_session_skips_empty_sessions(db: DBSession) -> None:
-#     day1, day2 = (date(2026, 1, i + 1) for i in range(2))
-#     session1 = _session_skatepark(day1)
-#     session2 = _session_empty(day2)
-#     db.add_all([session1, session2])
-#     db.commit()
-#     most_recent = q.find_most_recent_session(db)
-#     assert most_recent == session1
-#
-# def test_find_by_date_range(db: DBSession) -> None:
-#     days = [date(2026, 1, i + 1) for i in range(10)]
-#     sessions = [_session_skatepark(d) for d in days]
-#     db.add_all(sessions)
-#     db.commit()
-#     found = q.find_by_date_range(db, days[1], days[9])
-#     assert list(found) == sessions[1:9]
-#
-# def test_find_tricks_by_date_range(db: DBSession) -> None:
-#     days = [date(2026, 1, i + 1) for i in range(10)]
-#     tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
-#     db.add_all(tricks)
-#     db.commit()
-#     found = q.find_tricks_by_date_range(db, days[1], days[9])
-#     assert list(found) == tricks[1:9]
-#
+def test_delete_session(db: DBSession, client: TestClient) -> None:
+    day = date(2026, 1, 1)
+    session = _session_skatepark(day)
+    db.add(session)
+    db.commit()
+    assert db.get(Session, day) is not None
+
+    resp = client.delete(f"{_base_url}/sessions/{day.isoformat()}")
+    assert resp.status_code == 200
+    assert resp.text == ""
+    assert db.get(Session, day) is None
+
+
+def test_delete_session_returns_empty_when_not_found(client: TestClient) -> None:
+    resp = client.delete(f"{_base_url}/sessions/{date(2026, 1, 1).isoformat()}")
+    assert resp.status_code == 200
+    assert resp.text == ""
+
+
+def test_get_sessions(db: DBSession, client: TestClient) -> None:
+    days = [date(2026, 1, 25) + timedelta(days=i) for i in range(10)]
+    sessions = [_session_skatepark(d) for d in days]
+    db.add_all(sessions)
+    db.commit()
+
+    resp = client.get(f"{_base_url}/sessions")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert sorted([it["day"] for it in body]) == [s.day.isoformat() for s in sessions]
+
+
+def test_get_sessions_with_month_and_year_filter(db: DBSession, client: TestClient) -> None:
+    days = [date(2026, 1, 25) + timedelta(days=i) for i in range(10)]
+    sessions = [_session_skatepark(d) for d in days]
+    db.add_all(sessions)
+    db.commit()
+
+    resp = client.get(f"{_base_url}/sessions?month=1&year=2026")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert sorted([it["day"] for it in body]) == [s.day.isoformat() for s in sessions[:7]]
+
+
+def test_get_sessions_returns_empty_list_when_no_sessions(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/sessions")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_get_tricks(db: DBSession, client: TestClient) -> None:
+    days = [date(2026, 1, 25) + timedelta(days=i) for i in range(10)]
+    tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
+    db.add_all(tricks)
+    db.commit()
+
+    resp = client.get(f"{_base_url}/tricks")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert sorted([it["day"] for it in body]) == [t.day.isoformat() for t in tricks]
+
+
+def test_get_tricks_with_month_and_year_filter(db: DBSession, client: TestClient) -> None:
+    days = [date(2026, 1, 25) + timedelta(days=i) for i in range(10)]
+    tricks = [Trick(day=d, name=f"Kickflip {d}") for d in days]
+    db.add_all(tricks)
+    db.commit()
+
+    resp = client.get(f"{_base_url}/tricks?month=1&year=2026")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert sorted([it["day"] for it in body]) == [t.day.isoformat() for t in tricks[:7]]
+
+
+def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/tricks")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
 # class TestCountByDateRange:
 #     @pytest.fixture(autouse=True)
 #     def setup_db(self, db: DBSession) -> None:
