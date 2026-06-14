@@ -223,66 +223,29 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
     assert resp.json() == []
 
 
-# class TestCountByDateRange:
-#     @pytest.fixture(autouse=True)
-#     def setup_db(self, db: DBSession) -> None:
-#         days = [date(2026, 1, i + 1) for i in range(15)]
-#         self.days = days
-#         sessions1 = [_session_skatepark(d) for d in days[0:10]]
-#         sessions2 = [_session_tennis_court(d) for d in days[10:15]]
-#         db.add_all(sessions1 + sessions2)
-#         db.commit()
-#
-#     def test_find_locations_with_start_filters_by_day(self, db: DBSession) -> None:
-#         found = q.find_locations(db, start=self.days[-1])
-#         assert found == {"Tennis Court"}
-#
-#     def test_find_locations_without_start_includes_all(self, db: DBSession) -> None:
-#         found = q.find_locations(db)
-#         assert found == {"Skatepark", "Tennis Court"}
-#
-#     def test_find_shoes_with_start_filters_by_day(self, db: DBSession) -> None:
-#         found = q.find_shoes(db, start=self.days[-1])
-#         assert found == {"Cupsole"}
-#
-#     def test_find_shoes_without_start_includes_all(self, db: DBSession) -> None:
-#         found = q.find_shoes(db)
-#         assert found == {"Vulc", "Cupsole"}
-#
-#     def test_find_boards_with_start_filters_by_day(self, db: DBSession) -> None:
-#         found = q.find_boards(db, start=self.days[-1])
-#         assert found == {"Popsicle"}
-#
-#     def test_find_boards_without_start_includes_all(self, db: DBSession) -> None:
-#         found = q.find_boards(db)
-#         assert found == {"Egg", "Popsicle"}
-#
-#     def test_find_location_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-#         aggs = q.find_location_counts(db, start=self.days[1], end=self.days[14])
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Tennis Court"
-#         assert aggs[0].count == 4
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[13]
-#         assert aggs[1].key == "Skatepark"
-#         assert aggs[1].count == 9
-#         assert aggs[1].start == self.days[1]
-#         assert aggs[1].end == self.days[9]
-#
-#     def test_find_location_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
-#         aggs = q.find_location_counts(db)
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Tennis Court"
-#         assert aggs[0].count == 5
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[14]
-#         assert aggs[1].key == "Skatepark"
-#         assert aggs[1].count == 10
-#         assert aggs[1].start == self.days[0]
-#         assert aggs[1].end == self.days[9]
-#
+class TestCountByDateRange:
+    @pytest.fixture(autouse=True)
+    def setup_db(self, db: DBSession) -> None:
+        days = [date(2026, 1, 25) + timedelta(days=i) for i in range(15)]
+        self.days = days
+        sessions1 = [_session_skatepark(d) for d in days if d.day % 2 == 0]
+        sessions2 = [_session_tennis_court(d) for d in days if d.day % 2 == 1]
+        db.add_all(sessions1 + sessions2)
+        db.commit()
+
+    def test_get_locations(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/locations")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["key"])
+        assert [(it["key"], it["count"]) for it in body] == [("Skatepark", 7), ("Tennis Court", 8)]
+
+    def test_get_locations_with_month_and_year_filter(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/locations?month=1&year=2026")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["key"])
+        assert [(it["key"], it["count"]) for it in body] == [("Skatepark", 3), ("Tennis Court", 4)]
+
+
 #     def test_find_shoe_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
 #         aggs = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
 #         aggs = sorted(aggs, key=lambda it: it.count)
@@ -295,7 +258,7 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[1].count == 9
 #         assert aggs[1].start == self.days[1]
 #         assert aggs[1].end == self.days[9]
-#
+
 #     def test_find_shoe_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
 #         aggs = q.find_shoe_counts(db)
 #         aggs = sorted(aggs, key=lambda it: it.count)
@@ -308,7 +271,7 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[1].count == 10
 #         assert aggs[1].start == self.days[0]
 #         assert aggs[1].end == self.days[9]
-#
+
 #     def test_find_board_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
 #         aggs = q.find_board_counts(db, start=self.days[1], end=self.days[14])
 #         aggs = sorted(aggs, key=lambda it: it.count)
@@ -321,7 +284,7 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[1].count == 9
 #         assert aggs[1].start == self.days[1]
 #         assert aggs[1].end == self.days[9]
-#
+
 #     def test_find_board_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
 #         aggs = q.find_board_counts(db)
 #         aggs = sorted(aggs, key=lambda it: it.count)
@@ -334,7 +297,7 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[1].count == 10
 #         assert aggs[1].start == self.days[0]
 #         assert aggs[1].end == self.days[9]
-#
+
 #     def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
 #         aggs = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
 #         aggs = sorted(aggs, key=lambda it: it.key)
@@ -352,7 +315,7 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[2].start == self.days[10]
 #         assert aggs[2].end == self.days[13]
 #         assert aggs[2].days_since == aggs[0].days_since - 4
-#
+
 #     def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
 #         aggs = q.find_discipline_counts(db)
 #         aggs = sorted(aggs, key=lambda it: it.key)
@@ -371,6 +334,8 @@ def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> N
 #         assert aggs[2].end == self.days[14]
 #         assert aggs[2].days_since == aggs[0].days_since - 5
 
+# TODO: test streak
+
 
 def _session_skatepark(day: date) -> Session:
     return Session(
@@ -383,15 +348,16 @@ def _session_skatepark(day: date) -> Session:
     )
 
 
-# def _session_tennis_court(day: date) -> Session:
-#     return Session(
-#         day=day,
-#         where="Tennis Court",
-#         shoe="Cupsole",
-#         board="Popsicle",
-#         notes="heelflip",
-#         bowl=True,
-#     )
-#
+def _session_tennis_court(day: date) -> Session:
+    return Session(
+        day=day,
+        where="Tennis Court",
+        shoe="Cupsole",
+        board="Popsicle",
+        notes="heelflip",
+        bowl=True,
+    )
+
+
 # def _session_empty(day: date) -> Session:
 #     return Session(day=day)
