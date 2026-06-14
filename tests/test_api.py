@@ -313,8 +313,24 @@ class TestCountByDateRange:
             d.isoformat() for d in (self.days[5], date.max, self.days[6])
         ]
 
+    def test_get_streak(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/streak")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["best"] == 15
+        print(body["days"])
+        assert body["days"] == [
+            {"day": self.days[i].isoformat(), "streak": i + 1} for i in range(len(self.days))
+        ]
 
-# TODO: test streak
+    def test_get_streak_with_month_and_year_filter(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/streak?month=1&year=2026")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["best"] == 7
+        assert body["days"] == [
+            {"day": self.days[i].isoformat(), "streak": i + 1} for i in range(7)
+        ]
 
 
 def _session_skatepark(day: date) -> Session:
@@ -337,7 +353,3 @@ def _session_tennis_court(day: date) -> Session:
         notes="heelflip",
         bowl=True,
     )
-
-
-# def _session_empty(day: date) -> Session:
-#     return Session(day=day)
