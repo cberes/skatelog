@@ -236,103 +236,83 @@ class TestCountByDateRange:
     def test_get_locations(self, client: TestClient) -> None:
         resp = client.get(f"{_base_url}/locations")
         assert resp.status_code == 200
-        body = sorted(resp.json(), key=lambda it: it["key"])
-        assert [(it["key"], it["count"]) for it in body] == [("Skatepark", 7), ("Tennis Court", 8)]
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [7, 8]
+        assert [it["key"] for it in body] == ["Skatepark", "Tennis Court"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in reversed(self.days[-2:])]
 
     def test_get_locations_with_month_and_year_filter(self, client: TestClient) -> None:
         resp = client.get(f"{_base_url}/locations?month=1&year=2026")
         assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [3, 4]
+        assert [it["key"] for it in body] == ["Skatepark", "Tennis Court"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in self.days[5:7]]
+
+    def test_get_shoes(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/shoes")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [7, 8]
+        assert [it["key"] for it in body] == ["Vulc", "Cupsole"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in reversed(self.days[-2:])]
+
+    def test_get_shoes_with_month_and_year_filter(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/shoes?month=1&year=2026")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [3, 4]
+        assert [it["key"] for it in body] == ["Vulc", "Cupsole"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in self.days[5:7]]
+
+    def test_get_boards(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/boards")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [7, 8]
+        assert [it["key"] for it in body] == ["Egg", "Popsicle"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in reversed(self.days[-2:])]
+
+    def test_get_boards_with_month_and_year_filter(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/boards?month=1&year=2026")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["count"])
+        assert [it["count"] for it in body] == [3, 4]
+        assert [it["key"] for it in body] == ["Egg", "Popsicle"]
+        assert [it["start"] for it in body] == [d.isoformat() for d in reversed(self.days[:2])]
+        assert [it["end"] for it in body] == [d.isoformat() for d in self.days[5:7]]
+
+    def test_get_disciplines(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/disciplines")
+        assert resp.status_code == 200
         body = sorted(resp.json(), key=lambda it: it["key"])
-        assert [(it["key"], it["count"]) for it in body] == [("Skatepark", 3), ("Tennis Court", 4)]
+        assert [it["count"] for it in body[:3]] == [7, 0, 8]
+        assert [it["key"] for it in body[:3]] == ["a_frame", "bank", "bowl"]
+        assert [it["start"] for it in body[:3]] == [
+            d.isoformat() for d in (self.days[1], date.max, self.days[0])
+        ]
+        assert [it["end"] for it in body[:3]] == [
+            d.isoformat() for d in (self.days[14], date.max, self.days[13])
+        ]
 
+    def test_get_disciplines_with_month_and_year_filter(self, client: TestClient) -> None:
+        resp = client.get(f"{_base_url}/disciplines?month=1&year=2026")
+        assert resp.status_code == 200
+        body = sorted(resp.json(), key=lambda it: it["key"])
+        assert [it["count"] for it in body[:3]] == [3, 0, 4]
+        assert [it["key"] for it in body[:3]] == ["a_frame", "bank", "bowl"]
+        assert [it["start"] for it in body[:3]] == [
+            d.isoformat() for d in (self.days[1], date.max, self.days[0])
+        ]
+        assert [it["end"] for it in body[:3]] == [
+            d.isoformat() for d in (self.days[5], date.max, self.days[6])
+        ]
 
-#     def test_find_shoe_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
-#         aggs = q.find_shoe_counts(db, start=self.days[1], end=self.days[14])
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Cupsole"
-#         assert aggs[0].count == 4
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[13]
-#         assert aggs[1].key == "Vulc"
-#         assert aggs[1].count == 9
-#         assert aggs[1].start == self.days[1]
-#         assert aggs[1].end == self.days[9]
-
-#     def test_find_shoe_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
-#         aggs = q.find_shoe_counts(db)
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Cupsole"
-#         assert aggs[0].count == 5
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[14]
-#         assert aggs[1].key == "Vulc"
-#         assert aggs[1].count == 10
-#         assert aggs[1].start == self.days[0]
-#         assert aggs[1].end == self.days[9]
-
-#     def test_find_board_aggs_with_start_end_filters_by_day(self, db: DBSession) -> None:
-#         aggs = q.find_board_counts(db, start=self.days[1], end=self.days[14])
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Popsicle"
-#         assert aggs[0].count == 4
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[13]
-#         assert aggs[1].key == "Egg"
-#         assert aggs[1].count == 9
-#         assert aggs[1].start == self.days[1]
-#         assert aggs[1].end == self.days[9]
-
-#     def test_find_board_aggs_without_start_end_includes_all(self, db: DBSession) -> None:
-#         aggs = q.find_board_counts(db)
-#         aggs = sorted(aggs, key=lambda it: it.count)
-#         assert len(aggs) == 2
-#         assert aggs[0].key == "Popsicle"
-#         assert aggs[0].count == 5
-#         assert aggs[0].start == self.days[10]
-#         assert aggs[0].end == self.days[14]
-#         assert aggs[1].key == "Egg"
-#         assert aggs[1].count == 10
-#         assert aggs[1].start == self.days[0]
-#         assert aggs[1].end == self.days[9]
-
-#     def test_find_discipline_counts_with_start_end_filters_by_day(self, db: DBSession) -> None:
-#         aggs = q.find_discipline_counts(db, start=self.days[1], end=self.days[14])
-#         aggs = sorted(aggs, key=lambda it: it.key)
-#         assert aggs[0].key == str(Discipline.A_FRAME)
-#         assert aggs[0].count == 9
-#         assert aggs[0].start == self.days[1]
-#         assert aggs[0].end == self.days[9]
-#         assert aggs[0].days_since is not None
-#         assert aggs[0].days_since > 1
-#         assert aggs[1].key == str(Discipline.BANK)
-#         assert aggs[1].count == 0
-#         assert aggs[1].days_since is None
-#         assert aggs[2].key == str(Discipline.BOWL)
-#         assert aggs[2].count == 4
-#         assert aggs[2].start == self.days[10]
-#         assert aggs[2].end == self.days[13]
-#         assert aggs[2].days_since == aggs[0].days_since - 4
-
-#     def test_find_discipline_counts_without_start_end_includes_all(self, db: DBSession) -> None:
-#         aggs = q.find_discipline_counts(db)
-#         aggs = sorted(aggs, key=lambda it: it.key)
-#         assert aggs[0].key == str(Discipline.A_FRAME)
-#         assert aggs[0].count == 10
-#         assert aggs[0].start == self.days[0]
-#         assert aggs[0].end == self.days[9]
-#         assert aggs[0].days_since is not None
-#         assert aggs[0].days_since > 1
-#         assert aggs[1].key == str(Discipline.BANK)
-#         assert aggs[1].count == 0
-#         assert aggs[1].days_since is None
-#         assert aggs[2].key == str(Discipline.BOWL)
-#         assert aggs[2].count == 5
-#         assert aggs[2].start == self.days[10]
-#         assert aggs[2].end == self.days[14]
-#         assert aggs[2].days_since == aggs[0].days_since - 5
 
 # TODO: test streak
 
