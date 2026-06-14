@@ -1,11 +1,11 @@
 {% for s in sessions %}
-<tr>
-	<td><a href="/sessions/{{ s.day }}">{{ s.day }}</a></td>
-	<td>{{ s.disciplines | map(attribute="value") | join(", ") or "-" }}</td>
-	<td>{{ s.where or "-" }}</td>
-	<td>{{ s.shoe or "-" }}</td>
-	<td>{{ s.board or "-" }}</td>
-	<td>{{ s.notes or "-" }}</td>
-	<td hx-delete="/api/v1/sessions/{{ s.day }}" class="clickable">🗑️</td>
-</tr>
+    <tr>
+        <td><a href="/sessions/{{ s.day }}">{{ s.day }}</a></td>
+        <td>{{ s.disciplines | map(attribute="value") | join(", ") or "-" }}</td>
+        <td>{{ s.where or "-" }}</td>
+        <td>{{ s.shoe or "-" }}</td>
+        <td>{{ s.board or "-" }}</td>
+        <td>{{ s.notes or "-" }}</td>
+        <td hx-delete="/api/v1/sessions/{{ s.day }}" class="clickable">🗑️</td>
+    </tr>
 {% endfor %}

@@ -1,73 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-
-<head>
-	<title>Skatelog</title>
-	<script src="https://unpkg.com/htmx.org@2"></script>
-	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
-</head>
-
-<body>
-	<header>
-		<nav id="top">
-			<a href="/">Dashboard</a>
-			<a href="/sessions">Sessions</a>
-			<a href="/tricks">Tricks</a>
-		</nav>
-		<h1>Skatelog</h1>
-		<p>Track your skateboard sessions</p>
-	</header>
-	<main>
-
-		<h2>Session: {{ session.day }}</h2>
-
-		<table>
-			<tr>
-				<th>Day</th>
-				<td>{{ session.day }}</td>
-			</tr>
-			<tr>
-				<th>Where</th>
-				<td>{{ session.where or "-" }}</td>
-			</tr>
-			<tr>
-				<th>Shoe</th>
-				<td>{{ session.shoe or "-" }}</td>
-			</tr>
-			<tr>
-				<th>Board</th>
-				<td>{{ session.board or "-" }}</td>
-			</tr>
-			{% for d in disciplines %}
-			<tr>
-				<th>{{ d | replace('_', ' ') | title }}</th>
-				<td>{{ session[d] }}</td>
-			</tr>
-			{% endfor %}
-			<tr>
-				<th>Notes</th>
-				<td>{{ session.notes or "-" }}</td>
-			</tr>
-		</table>
-
-		<h3>Tricks</h3>
-
-		<table>
-			<thead>
-				<tr>
-					<th>Day</th>
-					<th>Count</th>
-					<th>Stance</th>
-					<th>Name</th>
-					<th>Surface</th>
-				</tr>
-			</thead>
-			<tbody id="tricks">
-				{% include "_trick_rows.html" %}
-			</tbody>
-		</table>
-	</main>
-
-</body>
-
+    <head>
+        <title>Skatelog</title>
+        <script src="https://unpkg.com/htmx.org@2"></script>
+        <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+    </head>
+    <body>
+        <header>
+            <nav id="top">
+                <a href="/">Dashboard</a>
+                <a href="/sessions">Sessions</a>
+                <a href="/tricks">Tricks</a>
+            </nav>
+            <h1>Skatelog</h1>
+            <p>Track your skateboard sessions</p>
+        </header>
+        <main>
+            <h2>Session: {{ session.day }}</h2>
+            <table>
+                <tr>
+                    <th>Day</th>
+                    <td>{{ session.day }}</td>
+                </tr>
+                <tr>
+                    <th>Where</th>
+                    <td>{{ session.where or "-" }}</td>
+                </tr>
+                <tr>
+                    <th>Shoe</th>
+                    <td>{{ session.shoe or "-" }}</td>
+                </tr>
+                <tr>
+                    <th>Board</th>
+                    <td>{{ session.board or "-" }}</td>
+                </tr>
+                {% for d in disciplines %}
+                    <tr>
+                        <th>{{ d | replace('_', ' ') | title }}</th>
+                        <td>{{ session[d] }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th>Notes</th>
+                    <td>{{ session.notes or "-" }}</td>
+                </tr>
+            </table>
+            <h3>Tricks</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Count</th>
+                        <th>Stance</th>
+                        <th>Name</th>
+                        <th>Surface</th>
+                    </tr>
+                </thead>
+                <tbody id="tricks">
+                    {% include "_trick_rows.html" %}
+                </tbody>
+            </table>
+        </main>
+    </body>
 </html>

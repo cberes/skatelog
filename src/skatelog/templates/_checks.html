@@ -1,3 +1,6 @@
 {% for o in options %}
-<label><input type="checkbox" id="{{ o }}" name="{{ o }}" value="true"> {{ o | replace('_', ' ') | title }}</label>
+    <label>
+        <input type="checkbox" id="{{ o }}" name="{{ o }}" value="true">
+        {{ o | replace('_', ' ') | title }}
+    </label>
 {% endfor %}

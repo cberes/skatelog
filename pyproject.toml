@@ -26,6 +26,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "djlint>=1.39.2",
     "httpx2>=2.3.0",
     "pre-commit>=4.6.0",
     "pyright>=1.1.409",
@@ -58,3 +59,6 @@ select = [
     # isort
     "I",
 ]
+
+[tool.djlint]
+profile = "jinja"

@@ -32,6 +32,9 @@ jobs:
       - name: Run ruff format --check
         run: uv run ruff format --check .
 
+      - name: Run djlint
+        run: uv run djlint src/skatelog/templates/ --check
+
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
 

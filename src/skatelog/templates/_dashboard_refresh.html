@@ -1,64 +1,66 @@
 <!-- main content -->
 {% include "_session_rows.html" %}
-
 <!-- disciplines -->
 <template>
-<tbody id="disciplines" hx-swap-oob="true">
-	{% with items=discipline_counts %}
-	{% include "_session_aggregate_relative.html" %}
-	{% endwith %}
-</tbody>
+    <tbody id="disciplines" hx-swap-oob="true">
+        {% with items=discipline_counts %}
+            {% include "_session_aggregate_relative.html" %}
+        {% endwith %}
+    </tbody>
 </template>
-
-<img id="disciplines-chart" hx-swap-oob="true" src="/disciplines.png?year={{ year }}&month={{ month }}"
-	alt="Discipline training frequency" />
-
+<img id="disciplines-chart"
+     hx-swap-oob="true"
+     src="/disciplines.png?year={{ year }}&month={{ month }}"
+     alt="Discipline training frequency" />
 <!-- locations -->
 <template>
-<tbody id="locations" hx-swap-oob="true">
-	{% with items=location_counts %}
-	{% include "_session_aggregate.html" %}
-	{% endwith %}
-</tbody>
+    <tbody id="locations" hx-swap-oob="true">
+        {% with items=location_counts %}
+            {% include "_session_aggregate.html" %}
+        {% endwith %}
+    </tbody>
 </template>
-
-<img id="locations-chart" hx-swap-oob="true" src="/locations.png?year={{ year }}&month={{ month }}"
-	alt="Location frequency" />
-
+<img id="locations-chart"
+     hx-swap-oob="true"
+     src="/locations.png?year={{ year }}&month={{ month }}"
+     alt="Location frequency" />
 <!-- shoes -->
 <template>
-<tbody id="shoes" hx-swap-oob="true">
-	{% with items=shoe_counts %}
-	{% include "_session_aggregate.html" %}
-	{% endwith %}
-</tbody>
+    <tbody id="shoes" hx-swap-oob="true">
+        {% with items=shoe_counts %}
+            {% include "_session_aggregate.html" %}
+        {% endwith %}
+    </tbody>
 </template>
-
-<img id="shoes-chart" hx-swap-oob="true" src="/shoes.png?year={{ year }}&month={{ month }}" alt="Shoe usage" />
-
+<img id="shoes-chart"
+     hx-swap-oob="true"
+     src="/shoes.png?year={{ year }}&month={{ month }}"
+     alt="Shoe usage" />
 <!-- boards -->
 <template>
-<tbody id="boards" hx-swap-oob="true">
-	{% with items=board_counts %}
-	{% include "_session_aggregate.html" %}
-	{% endwith %}
-</tbody>
+    <tbody id="boards" hx-swap-oob="true">
+        {% with items=board_counts %}
+            {% include "_session_aggregate.html" %}
+        {% endwith %}
+    </tbody>
 </template>
-
-<img id="boards-chart" hx-swap-oob="true" src="/boards.png?year={{ year }}&month={{ month }}" alt="Board usage" />
-
+<img id="boards-chart"
+     hx-swap-oob="true"
+     src="/boards.png?year={{ year }}&month={{ month }}"
+     alt="Board usage" />
 <!-- streak -->
 <template>
-<td id="streak" hx-swap-oob="true">{{ streak }}</td>
+    <td id="streak" hx-swap-oob="true">{{ streak }}</td>
 </template>
-
-<img id="streak-chart" hx-swap-oob="true" src="/streak.png?year={{ year }}&month={{ month }}" alt="Streak by day" />
-
+<img id="streak-chart"
+     hx-swap-oob="true"
+     src="/streak.png?year={{ year }}&month={{ month }}"
+     alt="Streak by day" />
 <!-- new tricks -->
 <template>
-<tbody id="new-tricks" hx-swap-oob="true">
-	{% with tricks=new_tricks %}
-	{% include "_trick_rows.html" %}
-	{% endwith %}
-</tbody>
+    <tbody id="new-tricks" hx-swap-oob="true">
+        {% with tricks=new_tricks %}
+            {% include "_trick_rows.html" %}
+        {% endwith %}
+    </tbody>
 </template>

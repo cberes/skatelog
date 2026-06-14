@@ -1,11 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-
-<head>
-	<title>Skatelog</title>
-	<script src="https://unpkg.com/htmx.org@2"></script>
-	<link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
-	<style>
+    <head>
+        <title>Skatelog</title>
+        <script src="https://unpkg.com/htmx.org@2"></script>
+        <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+        <style>
 		tr.htmx-swapping td {
 			opacity: 0;
 			transition: opacity 1s ease-out;
@@ -14,156 +13,147 @@
 		td.clickable:hover {
 			cursor: pointer;
 		}
-	</style>
-</head>
-
-<body>
-	<header>
-		<nav id="top">
-			<a href="/" class="current">Dashboard</a>
-			<a href="/sessions">Sessions</a>
-			<a href="/tricks">Tricks</a>
-		</nav>
-		<h1>Skatelog</h1>
-		<p>Track your skateboard sessions</p>
-	</header>
-	<main>
-
-		<h2>Dashboard</h2>
-
-		<form hx-get="/refresh" hx-target="#sessions" hx-swap="innerHTML"
-			hx-trigger="change, input delay:500ms">
-			<label for="month">Filter by date:</label>
-
-			<select id="month" name="month">
-				{% include "_months.html" %}
-			</select>
-
-			<input type="number" id="year" name="year" value="2026">
-		</form>
-
-		<h3>Recent sessions</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Day</th>
-					<th>Disciplines</th>
-					<th>Where</th>
-					<th>Shoe</th>
-					<th>Board</th>
-					<th>Notes</th>
-					<th>&nbsp;</th>
-				</tr>
-			</thead>
-			<tbody id="sessions" hx-confirm="Delete this session?" hx-target="closest tr"
-				hx-swap="outerHTML swap:200ms">
-				{% include "_session_rows.html" %}
-			</tbody>
-		</table>
-		<p>
-			<a href="/sessions#add-session">Add a session</a>
-		</p>
-
-		<h3>Disciplines</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Discipline</th>
-					<th>Count</th>
-					<th>Last trained</th>
-				</tr>
-			</thead>
-			<tbody id="disciplines">
-				{% with items=discipline_counts %}
-				{% include "_session_aggregate_relative.html" %}
-				{% endwith %}
-			</tbody>
-		</table>
-		<img id="disciplines-chart" src="/disciplines.png" alt="Discipline training frequency" />
-
-		<h3>Locations</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Location</th>
-					<th>Count</th>
-					<th>Start</th>
-					<th>End</th>
-				</tr>
-			</thead>
-			<tbody id="locations">
-				{% with items=location_counts %}
-				{% include "_session_aggregate.html" %}
-				{% endwith %}
-			</tbody>
-		</table>
-		<img id="locations-chart" src="/locations.png" alt="Location frequency" />
-
-		<h3>Shoes</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Shoe</th>
-					<th>Count</th>
-					<th>Start</th>
-					<th>End</th>
-				</tr>
-			</thead>
-			<tbody id="shoes">
-				{% with items=shoe_counts %}
-				{% include "_session_aggregate.html" %}
-				{% endwith %}
-			</tbody>
-		</table>
-		<img id="shoes-chart" src="/shoes.png" alt="Shoe usage" />
-
-		<h3>Boards</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Board</th>
-					<th>Count</th>
-					<th>Start</th>
-					<th>End</th>
-				</tr>
-			</thead>
-			<tbody id="boards">
-				{% with items=board_counts %}
-				{% include "_session_aggregate.html" %}
-				{% endwith %}
-			</tbody>
-		</table>
-		<img id="boards-chart" src="/boards.png" alt="Board usage" />
-
-		<h3>Streak</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Best streak</th>
-					<td id="streak">{{ streak }}</td>
-				</tr>
-			</thead>
-		</table>
-		<img id="streak-chart" src="/streak.png" alt="Streak by day" />
-
-		<h3>New Tricks</h3>
-		<table>
-			<thead>
-				<tr>
-					<th>Day</th>
-					<th>Count</th>
-					<th>Stance</th>
-					<th>Name</th>
-					<th>Surface</th>
-				</tr>
-			</thead>
-			<tbody id="new-tricks">
-				{% with tricks=new_tricks %}
-				{% include "_trick_rows.html" %}
-				{% endwith %}
-			</tbody>
-		</table>
-	</main>
-</body>
-
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav id="top">
+                <a href="/" class="current">Dashboard</a>
+                <a href="/sessions">Sessions</a>
+                <a href="/tricks">Tricks</a>
+            </nav>
+            <h1>Skatelog</h1>
+            <p>Track your skateboard sessions</p>
+        </header>
+        <main>
+            <h2>Dashboard</h2>
+            <form hx-get="/refresh"
+                  hx-target="#sessions"
+                  hx-swap="innerHTML"
+                  hx-trigger="change, input delay:500ms">
+                <label for="month">Filter by date:</label>
+                <select id="month" name="month">{% include "_months.html" %}</select>
+                <input type="number" id="year" name="year" value="2026">
+            </form>
+            <h3>Recent sessions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Disciplines</th>
+                        <th>Where</th>
+                        <th>Shoe</th>
+                        <th>Board</th>
+                        <th>Notes</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions"
+                       hx-confirm="Delete this session?"
+                       hx-target="closest tr"
+                       hx-swap="outerHTML swap:200ms">
+                    {% include "_session_rows.html" %}
+                </tbody>
+            </table>
+            <p>
+                <a href="/sessions#add-session" class="button">Add a session</a>
+            </p>
+            <h3>Disciplines</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Discipline</th>
+                        <th>Count</th>
+                        <th>Last trained</th>
+                    </tr>
+                </thead>
+                <tbody id="disciplines">
+                    {% with items=discipline_counts %}
+                        {% include "_session_aggregate_relative.html" %}
+                    {% endwith %}
+                </tbody>
+            </table>
+            <img id="disciplines-chart"
+                 src="/disciplines.png"
+                 alt="Discipline training frequency" />
+            <h3>Locations</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Count</th>
+                        <th>Start</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody id="locations">
+                    {% with items=location_counts %}
+                        {% include "_session_aggregate.html" %}
+                    {% endwith %}
+                </tbody>
+            </table>
+            <img id="locations-chart" src="/locations.png" alt="Location frequency" />
+            <h3>Shoes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Shoe</th>
+                        <th>Count</th>
+                        <th>Start</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody id="shoes">
+                    {% with items=shoe_counts %}
+                        {% include "_session_aggregate.html" %}
+                    {% endwith %}
+                </tbody>
+            </table>
+            <img id="shoes-chart" src="/shoes.png" alt="Shoe usage" />
+            <h3>Boards</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Board</th>
+                        <th>Count</th>
+                        <th>Start</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody id="boards">
+                    {% with items=board_counts %}
+                        {% include "_session_aggregate.html" %}
+                    {% endwith %}
+                </tbody>
+            </table>
+            <img id="boards-chart" src="/boards.png" alt="Board usage" />
+            <h3>Streak</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Best streak</th>
+                        <td id="streak">{{ streak }}</td>
+                    </tr>
+                </thead>
+            </table>
+            <img id="streak-chart" src="/streak.png" alt="Streak by day" />
+            <h3>New Tricks</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Count</th>
+                        <th>Stance</th>
+                        <th>Name</th>
+                        <th>Surface</th>
+                    </tr>
+                </thead>
+                <tbody id="new-tricks">
+                    {% with tricks=new_tricks %}
+                        {% include "_trick_rows.html" %}
+                    {% endwith %}
+                </tbody>
+            </table>
+        </main>
+    </body>
 </html>
