@@ -172,7 +172,7 @@ def test_get_sessions(db: DBSession, client: TestClient) -> None:
     resp = client.get(f"{_base_url}/sessions")
     assert resp.status_code == 200
     body = resp.json()
-    assert sorted([it["day"] for it in body]) == [s.day.isoformat() for s in sessions]
+    assert sorted([elem["day"] for elem in body]) == [s.day.isoformat() for s in sessions]
 
 
 def test_get_sessions_with_month_and_year_filter(db: DBSession, client: TestClient) -> None:
@@ -184,7 +184,7 @@ def test_get_sessions_with_month_and_year_filter(db: DBSession, client: TestClie
     resp = client.get(f"{_base_url}/sessions?month=1&year=2026")
     assert resp.status_code == 200
     body = resp.json()
-    assert sorted([it["day"] for it in body]) == [s.day.isoformat() for s in sessions[:7]]
+    assert sorted([elem["day"] for elem in body]) == [s.day.isoformat() for s in sessions[:7]]
 
 
 def test_get_sessions_returns_empty_list_when_no_sessions(client: TestClient) -> None:
@@ -202,7 +202,7 @@ def test_get_tricks(db: DBSession, client: TestClient) -> None:
     resp = client.get(f"{_base_url}/tricks")
     assert resp.status_code == 200
     body = resp.json()
-    assert sorted([it["day"] for it in body]) == [t.day.isoformat() for t in tricks]
+    assert sorted([elem["day"] for elem in body]) == [t.day.isoformat() for t in tricks]
 
 
 def test_get_tricks_with_month_and_year_filter(db: DBSession, client: TestClient) -> None:
@@ -214,13 +214,59 @@ def test_get_tricks_with_month_and_year_filter(db: DBSession, client: TestClient
     resp = client.get(f"{_base_url}/tricks?month=1&year=2026")
     assert resp.status_code == 200
     body = resp.json()
-    assert sorted([it["day"] for it in body]) == [t.day.isoformat() for t in tricks[:7]]
+    assert sorted([elem["day"] for elem in body]) == [t.day.isoformat() for t in tricks[:7]]
+
+
+def test_get_tricks_with_new_filter(db: DBSession, client: TestClient) -> None:
+    days = [date(2026, 1, 1) + timedelta(days=i) for i in range(10)]
+    tricks = [Trick(day=d, name="kickflip") for d in days]
+    tricks[5].name = "heelflip"
+    tricks[6].surface = "A-frame"
+    db.add_all(tricks)
+    db.commit()
+
+    resp = client.get(f"{_base_url}/tricks?new=true")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert sorted([elem["day"] for elem in body]) == [tricks[i].day.isoformat() for i in (0, 5, 6)]
 
 
 def test_get_tricks_returns_empty_list_when_no_sessions(client: TestClient) -> None:
     resp = client.get(f"{_base_url}/tricks")
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+def test_get_locations_when_empty(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/locations")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_get_shoes_when_empty(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/shoes")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_get_boards_when_empty(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/boards")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_get_disciplines_when_empty(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/disciplines")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert {elem["key"] for elem in body} == {d.value for d in Discipline}
+    assert {elem["count"] for elem in body} == {0}
+
+
+def test_get_streak_when_empty(client: TestClient) -> None:
+    resp = client.get(f"{_base_url}/streak")
+    assert resp.status_code == 200
+    assert resp.json() == {"best": 0, "days": []}
 
 
 class TestCountByDateRange:
@@ -318,7 +364,6 @@ class TestCountByDateRange:
         assert resp.status_code == 200
         body = resp.json()
         assert body["best"] == 15
-        print(body["days"])
         assert body["days"] == [
             {"day": self.days[i].isoformat(), "streak": i + 1} for i in range(len(self.days))
         ]
